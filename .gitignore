@@ -219,3 +219,6 @@ __marimo__/
 
 # WSL download artifacts
 *:Zone.Identifier
+
+# Session handoff snapshot (local scratch, overwritten each handoff)
+STATE.md
