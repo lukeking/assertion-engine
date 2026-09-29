@@ -86,8 +86,9 @@ but does not yet implement the ingestion, evaluator, or alert stages.
 ## Deferred
 
 - The technology stack and parser strategy remain M0 plan decisions.
-- The latency ladder remains unanchored beyond the initial 10 Hz scenario until measured evidence
-  from the simulator, PX4 SITL, and logs exists.
+- The M0 plan derives an initial latency ladder from the 100 ms inter-event budget implied by the
+  10 Hz baseline, as required by the constitution. Simulator, PX4 SITL, and log measurements may
+  revise or extend it.
 - Sensor/estimator failures such as drift, delay, stuck values, and threshold-cliff battery
   estimates are later adversarial scenarios, not M0's normal trajectory.
 - Physical sensor loading and detailed energy models are omitted until their magnitude matters to
