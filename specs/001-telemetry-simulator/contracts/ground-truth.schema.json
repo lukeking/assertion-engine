@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/lukeking/assertion-engine/main/specs/001-telemetry-simulator/contracts/ground-truth.schema.json",
+  "title": "Assertion Engine M0 scenario ground truth",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "artifact_version",
+    "scenario",
+    "terminal_time_s",
+    "phases"
+  ],
+  "properties": {
+    "artifact_version": {
+      "const": "1.0.0"
+    },
+    "scenario": {
+      "$ref": "common.schema.json#/$defs/scenarioSource"
+    },
+    "terminal_time_s": {
+      "type": "number",
+      "minimum": 0
+    },
+    "phases": {
+      "type": "array",
+      "minItems": 5,
+      "maxItems": 5,
+      "items": {
+        "$ref": "#/$defs/phaseInterval"
+      }
+    }
+  },
+  "$defs": {
+    "phaseInterval": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "start_time_s",
+        "end_time_s"
+      ],
+      "properties": {
+        "name": {
+          "enum": [
+            "takeoff",
+            "hover",
+            "northbound",
+            "return",
+            "landing"
+          ]
+        },
+        "start_time_s": {
+          "type": "number",
+          "minimum": 0
+        },
+        "end_time_s": {
+          "type": "number",
+          "minimum": 0
+        }
+      }
+    }
+  }
+}
