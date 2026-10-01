@@ -29,6 +29,11 @@
 compact separators、有限數值與單一 LF。這些是本專案的契約選擇，
 不是 Python 函式庫自動保證的 artifact 規格。
 
+Phase 起點 `s_i` 對應的序號邊界為 `b_i = ceil(s_i × r)`：第一個不早於起點的 tick。
+因此 `s_i <= k/r < e_i` 等價於整數區間 `ceil(s_i × r) <= k < ceil(e_i × r)`。
+最後一段另外包含終點 `N`。這是本專案由半開區間直接推得的 E2 算術；
+計算必須使用 Fraction 的精確比較／取整，不先將時間或 rate 套用 `Q`。
+
 ## 2. 分段正常運動
 
 來源：[OpenStax《University Physics Volume 1》§3.4，式 3.13](https://openstax.org/books/university-physics-volume-1/pages/3-4-motion-with-constant-acceleration)。
@@ -44,6 +49,7 @@ compact separators、有限數值與單一 LF。這些是本專案的契約選�
 `battery_percent = initial_battery_percent - drain × t_k` 是 FR-009 接受的線性模型，
 不是教材提供的電池物理模型。`scenario.py` 使用未量化 tick 時間計算，
 telemetry 與獨立 phase timeline 依各自的 artifact 契約保存。
+Ground truth 同時保存各段的 `start_sequence_number`，讓原始 tick 歸屬在序列化後仍可還原。
 
 ## 3. 唯讀狀態與速度
 
@@ -56,8 +62,11 @@ telemetry 與獨立 phase timeline 依各自的 artifact 契約保存。
 `view_model.py` 從已保存的 `velocity_ned_mps` 推導 speed，從 `-position_ned_m[2]`
 推導 altitude。它不重新產生位置或電量。
 
-cursor 是已保存 snapshot 的索引；phase lookup 依獨立 ground truth 的半開區間，
-phase/time 顯示遵守 [PlaybackSession 契約](../../specs/001-telemetry-simulator/data-model.md#playbacksession)。
+cursor 是已保存 snapshot 的索引；phase lookup 依獨立 ground truth 的序號邊界，
+取固定五段順序中最後一個 `start_sequence_number <= sequence_number` 的 phase。
+相同序號邊界代表空區間；整數 lookup 不會因四捨五入誤判，亦不需重算 source timeline。
+phase/time 顯示遵守 [PlaybackSession 契約](../../specs/001-telemetry-simulator/data-model.md#playbacksession)，
+其中 rounded time 座標可以重合，當前 phase 仍以序號歸屬為準。
 pause、step、restart 與 speed 只改 cursor 或觀看時鐘，從不改事件順序或任務時間。
 
 ## 4. 畫面與觀看時鐘

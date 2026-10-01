@@ -67,6 +67,7 @@ assertion-playback \
 
 - Both files pass their JSON Schemas and semantic validators.
 - Their normalized `scenario` objects are byte-equivalent after canonical serialization.
+- Ground-truth phase `start_sequence_number` values pass exact source-derived validation; current phase is selected by snapshot sequence, not rounded time equality.
 - `--speed` is greater than zero; default is `1.0`.
 - `--headless-output`, when supplied, must name a file whose parent directory already exists and is explicitly chosen by the caller.
 
@@ -79,6 +80,7 @@ assertion-playback \
   - current phase and `mission_time_s`;
   - play/pause, one-snapshot step, restart and speed controls.
 - Controls modify only the playback cursor and wall-clock rate.
+- Phase labels use validated sequence boundaries even when a displayed snapshot time coincides with a rounded phase start.
 
 ### Headless success
 
@@ -96,5 +98,6 @@ assertion-playback \
 ## Compatibility
 
 - Artifact compatibility is controlled by `artifact_version`.
-- M0 accepts exactly `1.0.0`; unsupported versions fail closed with exit `2`.
+- M0 accepts telemetry artifact `1.0.0` and ground-truth artifact `2.0.0`; configuration schema and scenario source versions are unchanged. Unsupported versions fail closed with exit `2`.
+- Ground truth `1.0.0` lacks the required sequence ownership boundary. Migrate by running generate with the same scenario version, configuration and seed into a new output directory; retain the original artifacts. Playback does not infer missing boundaries or rewrite legacy files.
 - Any future incompatible change requires a new schema version and an explicit migration or adapter path.

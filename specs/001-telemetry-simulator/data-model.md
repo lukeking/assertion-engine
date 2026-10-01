@@ -8,7 +8,9 @@ The model separates three responsibilities:
 2. `TelemetryArtifact` records only observable state snapshots.
 3. `GroundTruthArtifact` records the expected phase timeline for tests and playback annotations.
 
-Telemetry never contains a phase label. Playback joins the two artifacts by identical scenario source metadata and mission time; it never modifies either artifact.
+Telemetry never contains a phase label. Playback joins the two artifacts by identical
+scenario source metadata and uses ground-truth sequence boundaries for phase ownership;
+mission time remains the snapshot's display time. It never modifies either artifact.
 
 ## ScenarioConfiguration
 
@@ -136,20 +138,50 @@ Semantic validation checks sequence continuity, time continuity, vehicle identit
 | Field | Type | Validation / meaning |
 |---|---|---|
 | `name` | enum | `takeoff`, `hover`, `northbound`, `return`, `landing` |
-| `start_time_s` | number | Inclusive |
-| `end_time_s` | number | Exclusive, except the terminal sample belongs to `landing` |
+| `start_time_s` | number | `Q(s_i)` of the exact source-derived phase start; display/plot coordinate |
+| `end_time_s` | number | `Q(e_i)` of the exact phase end; display/plot coordinate |
+| `start_sequence_number` | integer | `ceil(s_i × r)`, using the unquantized source phase start and rate; authoritative ownership boundary |
 
-The five intervals are ordered, contiguous, non-overlapping and cover `[0, terminal_time_s]` under the terminal inclusion rule.
+The five exact source intervals are ordered, contiguous and non-overlapping, using
+`[s_i, e_i)` with the terminal tick included in landing. Their quantized display
+coordinates cover `[0, terminal_time_s]` and may coincide after rounding.
+
+### Phase ownership by sequence
+
+For each phase `i`, store `b_i = ceil(s_i × r)` before quantization. The first boundary
+is `b_0 = 0`; all boundaries are non-decreasing integers within `0…N`.
+Phase `i < 4` owns snapshot indices `[b_i, b_(i+1))`; landing owns `[b_4, N]`.
+Equal adjacent boundaries mean an empty snapshot interval. For a snapshot index `k`,
+playback selects the last phase in the fixed five-phase order whose `b_i <= k`.
+Thus zero-duration/unsampled phases receive no snapshot, and the terminal index `N`
+always belongs to landing, including when several phases start at that index.
+
+The semantic validator derives exact `s_i` from source parameters, verifies every
+stored boundary equals `ceil(s_i × r)`, verifies display coordinates equal `Q(s_i)`
+and `Q(e_i)`, and checks range/order/coverage against the paired telemetry count.
+Playback then reads the validated boundaries; it does not recompute motion, battery,
+or the phase timeline and does not compare rounded times to choose a phase.
+
+A1 example: altitude `0.3333334`, climb rate `1`, hover duration `0.6666666`, northbound
+distance `3`, cruise speed `3`, descent rate `0.3333334` and observation spacing `1`
+give a 3 Hz, 4 s mission with 13 snapshots. Exact phase starts are
+`0, 0.3333334, 1, 2, 3`; stored sequence boundaries are `0, 2, 3, 6, 9`.
+Tick 1 (`1/3` s) stays takeoff even though its display time and hover's displayed start
+are both `0.333333`. Tick 2 is hover; terminal tick 12 is landing.
+
+Current-phase labels and phase-dependent marker styling use these sequence boundaries.
+The rounded time intervals remain plot annotations; equality of displayed coordinates
+is not evidence that the current snapshot has crossed the exact source boundary.
 
 Baseline boundaries:
 
-| Phase | Interval | Position intent |
-|---|---|---|
-| `takeoff` | `[0, 10)` | down moves 0 → -10 m |
-| `hover` | `[10, 15)` | position fixed at `(0, 0, -10)` |
-| `northbound` | `[15, 25)` | north moves 0 → 20 m |
-| `return` | `[25, 35)` | north moves 20 → 0 m |
-| `landing` | `[35, 45]` | down moves -10 → 0 m; terminal sample included |
+| Phase | Exact interval | Snapshot ownership | Position intent |
+|---|---|---|---|
+| `takeoff` | `[0, 10)` | `[0, 100)` | down moves 0 → -10 m |
+| `hover` | `[10, 15)` | `[100, 150)` | position fixed at `(0, 0, -10)` |
+| `northbound` | `[15, 25)` | `[150, 250)` | north moves 0 → 20 m |
+| `return` | `[25, 35)` | `[250, 350)` | north moves 20 → 0 m |
+| `landing` | `[35, 45]` | `[350, 450]` | down moves -10 → 0 m; terminal sample included |
 
 ## GroundTruthArtifact
 
@@ -157,12 +189,17 @@ File: `ground-truth.json`.
 
 | Field | Type | Meaning |
 |---|---|---|
-| `artifact_version` | string | `1.0.0` |
+| `artifact_version` | string | `2.0.0` for ground truth; telemetry remains `1.0.0` |
 | `scenario` | `ScenarioSource` | Byte-identical source object to telemetry artifact |
 | `terminal_time_s` | number | `Q(T)`; the unquantized source-derived `T × r` must be an integer |
-| `phases` | array[`PhaseInterval`] | Exactly five ordered phase intervals |
+| `phases` | array[`PhaseInterval`] | Exactly five ordered phase intervals with required `start_sequence_number` |
 
 Ground truth is never passed as telemetry to the future Assertion Engine.
+
+Version `2.0.0` makes the sequence boundary mandatory. Ground truth `1.0.0` is rejected
+with exit `2`; migrate by regenerating the artifact pair from the same scenario version,
+configuration and seed into a new output directory. The config/source contract and
+telemetry artifact remain `1.0.0`; playback does not silently enrich an old ground truth.
 
 ## Canonical byte contract
 

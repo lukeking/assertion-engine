@@ -12,7 +12,7 @@
   ],
   "properties": {
     "artifact_version": {
-      "const": "1.0.0"
+      "const": "2.0.0"
     },
     "scenario": {
       "$ref": "common.schema.json#/$defs/scenarioSource"
@@ -37,7 +37,8 @@
       "required": [
         "name",
         "start_time_s",
-        "end_time_s"
+        "end_time_s",
+        "start_sequence_number"
       ],
       "properties": {
         "name": {
@@ -56,6 +57,11 @@
         "end_time_s": {
           "type": "number",
           "minimum": 0
+        },
+        "start_sequence_number": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "First snapshot index at or after the phase start: ceil(s_i * r), deriving both values exactly from scenario source parameters before quantization."
         }
       }
     }

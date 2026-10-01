@@ -18,6 +18,7 @@
 - Q: 任務終點未落在取樣格上時如何處理？ → A: 拒絕設定；內部階段切換仍可不對齊取樣格。終點對齊檢查使用未量化的任務總時長與取樣率，不能因輸出時間四捨五入而接受未對齊設定。
 - Q: Generate 的明示 output parent 不存在時如何處理？ → A: 設定與待發布成品驗證成功後，自動建立所需 parent directories；無效 arguments／設定不建立目錄，既有 final target 不覆寫。
 - Q: GitHub 尚無 CI gating，M0 的 T030 是否包含 merge gating？ → A: 包含；workflow 實際 PASS 後，以真實 check 名稱設定 required status checks，讓 main 的 merge 受其結果約束。
+- Q: 原始 tick 與量化後時間判出不同 phase 時，以哪個為準？ → A: 以未量化的 source phase 與 tick 決定歸屬，將各 phase 起點對應的 snapshot 序號邊界保存於獨立 ground truth。Playback 用序號判定 phase，六位小數時間用於顯示；即使顯示時間相同，序號歸屬不變。
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -75,6 +76,7 @@
 - 任務終點未落在設定決定的取樣格上時，產生流程必須拒絕設定並指出終點對齊問題；檢查須在輸出時間量化與任何 output directory 建立之前完成。內部階段切換可不對齊取樣格。
 - 明示 output parent 不存在時，產生流程在設定與成品驗證成功後建立所需目錄；既有 final target 必須保留並拒絕覆寫。Parent 建立或成品發布失敗時，必須指出路徑且不得發布 partial artifact 目錄。
 - 階段切換落在取樣邊界時，ground truth MUST 以 `[start, end)` 將該快照歸入新階段；任務終點的降落快照納入最後階段。`sequence_number` 與 `mission_time_s` 仍必須各自保持連續且嚴格遞增，不得重複或遺漏快照。
+- 量化後 snapshot 時間與 phase 邊界相同，但未量化 tick 尚未到達該邊界時，歸屬 MUST 保持在原階段。Ground truth MUST 保存可精確還原 snapshot 歸屬的序號邊界；零時長或未包含 snapshot 的 phase 可有空序號區間。
 - 設定會讓電量在任務結束前低於 0% 時，產生流程必須拒絕該正常情境；事件成品不得含超出 0–100% 的電量。
 - playback 收到缺欄位、順序錯誤或無法配對 ground truth 的成品時，必須清楚拒絕播放，不得自行補值、平滑、插值或重新產生事件。
 - 暫停、單步、倍速與重新開始只能改變觀看方式；任何控制都不得修改事件成品或其任務時間。
@@ -92,7 +94,7 @@
 - **FR-007**: `position_ned_m` 與 `velocity_ned_mps` MUST 使用以起飛點為原點的 local NED（North-East-Down，北、東、下）；載具位於起飛點上方時 `down` MUST 為負值。
 - **FR-008**: 系統 MUST 從速度向量推導純量速率，不得在遙測快照中另存重複的純量速率欄位。
 - **FR-009**: 電量 MUST 由可設定的初始百分比與每秒線性綜合耗電率決定，所有輸出 MUST 保持在 0–100% 之間。
-- **FR-010**: 情境階段 MUST 作為獨立 ground truth 保存，且 MUST NOT 出現在遙測快照中。階段 MUST 使用 `[start, end)`；切換時點的快照屬於新階段，任務終點快照納入最後階段。
+- **FR-010**: 情境階段 MUST 作為獨立 ground truth 保存，且 MUST NOT 出現在遙測快照中。歸屬 MUST 依未量化的 source 時間與 tick 使用 `[start, end)` 決定，切換時點屬於新階段、任務終點納入最後階段；ground truth MUST 保存各 phase 起點對應的 snapshot 序號邊界，讓 playback 精確還原歸屬，不能以量化時間改判 phase。
 - **FR-011**: 相同的情境版本、設定與種子 MUST 產生各自 byte-for-byte 相同的 event artifact 與 ground truth；兩份輸出 MUST 帶有足以重現其來源的情境版本、設定與種子資訊。
 - **FR-012**: Simulator MUST 產生 upstream state estimate，不得宣稱或模擬 raw GPS、IMU、電壓、電流、sensor fusion、雜訊或 estimator fidelity。
 - **FR-013**: playback MUST 只讀取已完成的事件成品與分離的 ground truth，不得重新計算、平滑、插值或替換運動、電量與觀測時間。
@@ -111,7 +113,7 @@
 - **Scenario Configuration**: 正常任務的輸入邊界，包含情境版本、亂數種子、運動、取樣與電量參數。
 - **Telemetry Snapshot**: 單一載具在一個任務時間點的完整 state-level 觀測，遵守 FR-004 的事件契約。
 - **Event Artifact**: 一次產生流程輸出的不可變、有序快照集合，帶有重現來源所需的情境資訊。
-- **Scenario Ground Truth**: 與遙測分離的階段時間線，以 `[start, end)` 表達階段區間並將任務終點納入最後階段；供驗證與視覺標註使用，不提供給未來 Assertion Engine 判斷規則。
+- **Scenario Ground Truth**: 與遙測分離的階段時間線，保存未量化 `[start, end)` 的 snapshot 序號歸屬邊界與量化後的顯示時間，任務終點納入最後階段；供驗證與視覺標註使用，不提供給未來 Assertion Engine 判斷規則。
 - **Playback Session**: 對既有 Event Artifact 的唯讀觀看狀態；控制只影響觀看進度，不影響任務時間或事件內容。
 
 ## Success Criteria *(mandatory)*
