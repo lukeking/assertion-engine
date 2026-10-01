@@ -23,12 +23,12 @@
 
 *GATE: Passed before Phase 0 research; re-checked after Phase 1 design below.*
 
-依 `.specify/memory/constitution.md` v1.0.0：
+依 `.specify/memory/constitution.md` v1.0.1：
 
 - [x] **I. 對抗式驗證** — M0 不實作 Fuzzer／Evaluator；兩者保留獨立 packages，architecture test 從一開始禁止 Fuzzer import DSL 或 Evaluator。
-- [x] **II. 尾延遲優先** — 本 feature 不設未量測的 performance Gate。`research.md` 只建立 E2/E3 provisional ladder；未來 benchmark 必須回報 p50/p95/p99/max 與 GC pauses，Gate 僅能由 E1 結果建立。
+- [x] **II. 尾延遲優先** — 本 feature 不設未量測的 performance Gate。`research.md` 推導的 E2/E3 provisional ladder 已填入憲章原則 II；T035 核對兩處與 Simulator rates 一致。未來 benchmark 必須回報 p50/p95/p99/max 與 GC pauses，Gate 僅能由 E1 結果建立。
 - [x] **III. 語法由語料庫反推** — M0 不設計或實作 grammar。ADR 002 只選 parser strategy；M1 必須先有不少於 10 條真實規則 corpus 才能寫 EBNF 與 parser。
-- [x] **IV. 可追溯且可理解** — 技術選擇均在 `research.md` 連到官方來源並附白話橋接；未來手寫 parser 必須讓 EBNF rule 與 parsing function 一一對應。
+- [x] **IV. 可追溯且可理解** — 技術選擇均在 `research.md` 連到官方來源；[M0 演算法說明](../../docs/algorithms/001-m0-telemetry-and-playback.md) 記錄教材章節、白話直覺與資料對應。T007／T012／T014／T022／T023 要求各演算法模組引用對應章節，T035 核對；未來手寫 parser 必須讓 EBNF rule 與 parsing function 一一對應。
 - [x] **V. 可重現** — Scenario Configuration 強制 explicit seed；canonical serializer、3-run hash tests 與無 run-specific metadata 保證兩份 artifacts 各自 byte-identical。
 - [x] **VI. 證據等級** — research scoring 每格標 E1/E2/E3；provisional latency ladder 明確不是 Gate。
 - [x] **視覺化驗收** — Matplotlib playback 提供 2D N/E path、同步 altitude/speed/battery plots 與 phase cursor；CI 以 Agg 產生 headless rendered evidence。
@@ -111,6 +111,8 @@ tests/
 ## Phase 1: Design & Contracts
 
 - [data-model.md](data-model.md) 定義 Scenario Configuration、Telemetry Snapshot、兩份 artifacts、Phase Interval 與 Playback Session lifecycle。
+- 時間使用 normalized source 的未量化數值重建精確有理 interval，以整數 tick 算出 `t_k` 再量化六位小數；`sample_interval_s` 是衍生 metadata，validator 不以其累加結果判定連續性。3 Hz 的明示驗證案例記於 data-model.md，T004／T005／T008／T009／T014 承接。
+- [M0 演算法說明](../../docs/algorithms/001-m0-telemetry-and-playback.md) 是實作模組的引用與白話橋接入口；包含 piecewise motion、numeric quantization 與 read-only playback 的來源與測試對應。
 - `contracts/*.schema.json` 使用 JSON Schema Draft 2020-12 描述外部 artifact shape；跨欄位、連續性、phase order 與 byte canonicalization 由 semantic validator 與 contract tests 補足。
 - [contracts/cli.md](contracts/cli.md) 固定 generate／playback command behavior、exit semantics 與 output destination rules。
 - [quickstart.md](quickstart.md) 以明示的 `build/artifacts/` 與 pytest `tmp_path` 操作，沒有任何 shared storage 或 inherited destination。

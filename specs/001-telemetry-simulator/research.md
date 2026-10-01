@@ -72,7 +72,7 @@ Scale: 1 (poor) to 5 (strong). Each cell carries its evidence tier.
 - Generation produces two separate UTF-8 JSON files: `telemetry.json` and `ground-truth.json`.
 - Both use JSON Schema Draft 2020-12 shape contracts plus semantic validation.
 - Canonical serialization sorts object keys, uses compact separators, rejects NaN/Infinity, writes exactly one trailing LF, and contains no wall-clock timestamp, absolute path, random UUID, or other run-specific value.
-- Motion values are computed from integer sample ticks and rounded to six fractional decimal places before serialization. This precision is E3 but is far below M0's 0.2 m/0.1 s observation resolution and avoids accumulated binary-float noise becoming artifact identity.
+- Motion values are computed from integer sample ticks using an unquantized rational interval derived from normalized source parameters; calculated output values are rounded to six fractional decimal places with ties to even. Rounded rate/interval metadata is not accumulated or used as the calculation source. This precision is E3 but is far below M0's 0.2 m/0.1 s observation resolution. The exact policy and 3 Hz example are in [data-model.md](data-model.md#exact-tick-time-and-serialized-precision); the algorithm sources are in [M0 algorithms §1](../../docs/algorithms/001-m0-telemetry-and-playback.md#1-精確取樣格與輸出量化).
 
 **Rationale**:
 

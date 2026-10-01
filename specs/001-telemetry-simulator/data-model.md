@@ -42,6 +42,38 @@ Human-authored file: `scenarios/normal-flight.toml`.
 - snapshot count = `terminal_time * sample_rate + 1` → 451, including both endpoints.
 - terminal battery = 91%.
 
+### Exact tick time and serialized precision
+
+Sampling calculations use the finite non-derived parameters in normalized `scenario.config`,
+interpreting their canonical decimal numeric representations as exact rational values.
+For example, spacing `0.2` means `1/5`, not the binary-float approximation to `0.2`.
+These input parameters retain their normalized numeric values in source metadata; the
+six-place rule below applies to calculated values, not an extra rounding of source inputs.
+
+Let `r = cruise_speed_mps / observation_spacing_m` and `Δt = 1/r` before quantization.
+For sequence number `k`, calculate the internal observation time as `t_k = k × Δt`.
+Do not accumulate either binary floats or a six-place `sample_interval_s`.
+
+Define `Q(x)` as rounding to the nearest multiple of `10^-6`, with exact ties to even,
+and normalize negative zero to zero. The JSON `mission_time_s` is `Q(t_k)`;
+the derived source metadata is `sample_rate_hz = Q(r)` and `sample_interval_s = Q(Δt)`.
+Neither derived metadata field replaces `r` or `Δt` in generation or validation.
+
+The semantic validator reconstructs `r` and `Δt` from non-derived source parameters,
+checks the two metadata values against `Q(r)` and `Q(Δt)`, and checks each timestamp
+against `Q(k × Δt)` by exact decimal numeric equality. It also checks strict ordering;
+adjacent serialized differences need not equal the rounded interval metadata.
+Prevalidation rejects settings whose quantized rate/interval metadata is non-positive or whose
+published tick times cease to be strictly increasing, before output staging.
+
+For an accepted 3 Hz, 5 s mission, the first timestamps are
+`0, 0.333333, 0.666667, 1`; the last is `5` at tick 15. Its rounded interval metadata
+is `0.333333`. Requiring every serialized difference to equal that metadata would
+reject valid data; accumulating it would incorrectly end at `4.999995`.
+
+Sources and the implementation mapping are in
+[M0 algorithms §1](../../docs/algorithms/001-m0-telemetry-and-playback.md#1-精確取樣格與輸出量化).
+
 Validation completes before output staging begins. Non-integral alignment between phase boundaries and sample ticks is allowed, but the generator still samples on the global tick grid and uses `[start, end)` phase ownership. The baseline aligns exactly.
 
 ## ScenarioSource
@@ -65,7 +97,7 @@ Every element of `TelemetryArtifact.snapshots` contains exactly these six fields
 |---|---|---|
 | `vehicle_id` | string | Non-empty and equal to `ScenarioSource.config.vehicle_id` |
 | `sequence_number` | integer | Starts at 0; increments by exactly 1 |
-| `mission_time_s` | number | Starts at 0; increments by `sample_interval_s`; strictly increasing |
+| `mission_time_s` | number | Starts at 0; equals `Q(sequence_number × Δt)` from non-derived source parameters; strictly increasing |
 | `position_ned_m` | array[3] number | `[north, east, down]`; east remains 0 in baseline |
 | `velocity_ned_mps` | array[3] number | `[north, east, down]`; scalar speed is derived, never stored |
 | `battery_percent` | number | In `[0, 100]`; linear aggregate drain |
@@ -119,7 +151,9 @@ Ground truth is never passed as telemetry to the future Assertion Engine.
 
 ## Canonical byte contract
 
-Before serialization, all calculated decimal values are rounded to six fractional places and negative zero is normalized to zero. JSON output then uses:
+Before serialization, all calculated decimal values use `Q` (six fractional places,
+nearest with ties to even), and negative zero is normalized to zero. Source input
+parameters preserve their normalized numeric values. JSON output then uses:
 
 - UTF-8;
 - lexicographically sorted object keys;
