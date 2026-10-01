@@ -39,7 +39,7 @@ Human-authored file: `scenarios/normal-flight.toml`.
 - northbound and return duration = `northbound_distance_m / cruise_speed_mps` → 10 s each.
 - landing duration = `target_altitude_m / descent_rate_mps` → 10 s.
 - terminal mission time = 45 s.
-- snapshot count = `terminal_time * sample_rate + 1` → 451, including both endpoints.
+- snapshot count = `N + 1`, where `N = T × r` uses unquantized terminal time/rate → 451, including both endpoints.
 - terminal battery = 91%.
 
 ### Exact tick time and serialized precision
@@ -74,7 +74,22 @@ reject valid data; accumulating it would incorrectly end at `4.999995`.
 Sources and the implementation mapping are in
 [M0 algorithms §1](../../docs/algorithms/001-m0-telemetry-and-playback.md#1-精確取樣格與輸出量化).
 
-Validation completes before output staging begins. Non-integral alignment between phase boundaries and sample ticks is allowed, but the generator still samples on the global tick grid and uses `[start, end)` phase ownership. The baseline aligns exactly.
+### Terminal alignment
+
+Let `T` be the unquantized mission duration obtained from all five source-derived
+phase durations. Prevalidation requires `N = T × r` to be an integer, using the exact
+rational source values before `Q`. Otherwise reject the configuration before any
+output directory or staging is created. No tolerance based on rounded timestamps
+is used for this decision.
+
+Generate ticks `k = 0…N`, including both endpoints; the final snapshot time is
+`Q(N × Δt) = Q(T)` and its velocity is zero. Internal phase boundaries may fall
+between ticks and keep the `[start, end)` ownership rule. The terminal snapshot
+belongs to landing.
+
+For example, 10 Hz with `T = 45.05` is rejected because `T × r = 450.5`.
+`T = 45.0000004` is also rejected even though `Q(T) = 45`.
+The baseline `45 × 10 = 450` and the 3 Hz example `5 × 3 = 15` are accepted.
 
 ## ScenarioSource
 
@@ -144,7 +159,7 @@ File: `ground-truth.json`.
 |---|---|---|
 | `artifact_version` | string | `1.0.0` |
 | `scenario` | `ScenarioSource` | Byte-identical source object to telemetry artifact |
-| `terminal_time_s` | number | Final mission time |
+| `terminal_time_s` | number | `Q(T)`; the unquantized source-derived `T × r` must be an integer |
 | `phases` | array[`PhaseInterval`] | Exactly five ordered phase intervals |
 
 Ground truth is never passed as telemetry to the future Assertion Engine.
@@ -163,7 +178,14 @@ parameters preserve their normalized numeric values. JSON output then uses:
 - exactly one trailing LF;
 - no indentation or platform-native newline conversion.
 
-Generation produces both byte sequences in memory, validates them against JSON Schema and semantic rules, writes them into a temporary directory beneath the requested parent, then renames the completed directory into place. The target directory must not already exist. Tests always request a pytest-owned `tmp_path`.
+Generation validates configuration and the unquantized terminal tick count, rejects an
+existing final target, then produces both byte sequences in memory and validates them
+against JSON Schema and semantic rules. Only after validation does it create missing
+caller-supplied parent directories, stage beneath that parent, and atomically publish
+the completed final directory. Invalid arguments/configuration create no directories.
+Operational failure removes this invocation's staging; already-created parent directories
+may remain, and existing parents/content are not removed. Tests always request a
+pytest-owned `tmp_path`. Exit semantics are defined in [contracts/cli.md](contracts/cli.md).
 
 ## PlaybackSession
 

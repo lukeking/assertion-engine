@@ -13,6 +13,12 @@
 - Q: 相同情境版本、設定與種子重跑時，可重現性用什麼尺度判定？ → A: Event artifact 與 ground truth 必須各自 byte-for-byte 相同。
 - Q: 快照剛好落在情境階段切換時點時，ground truth 歸入哪個階段？ → A: 階段採 `[start, end)`；邊界快照屬於新階段，任務終點快照納入最後階段。
 
+### Session 2026-10-01
+
+- Q: 任務終點未落在取樣格上時如何處理？ → A: 拒絕設定；內部階段切換仍可不對齊取樣格。終點對齊檢查使用未量化的任務總時長與取樣率，不能因輸出時間四捨五入而接受未對齊設定。
+- Q: Generate 的明示 output parent 不存在時如何處理？ → A: 設定與待發布成品驗證成功後，自動建立所需 parent directories；無效 arguments／設定不建立目錄，既有 final target 不覆寫。
+- Q: GitHub 尚無 CI gating，M0 的 T030 是否包含 merge gating？ → A: 包含；workflow 實際 PASS 後，以真實 check 名稱設定 required status checks，讓 main 的 merge 受其結果約束。
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - 產生可重現的正常任務 (Priority: P1)
@@ -28,6 +34,7 @@
 1. **Given** 基準正常情境與固定種子，**When** 使用者產生遙測，**Then** 系統輸出一份不可變的有序事件成品，涵蓋起飛、懸停、向北飛行、返航與降落。
 2. **Given** 完全相同的情境版本、設定與種子，**When** 使用者重跑產生流程，**Then** 兩次產生的 event artifact 與 ground truth 各自 byte-for-byte 相同。
 3. **Given** 基準情境，**When** 使用者檢查任一遙測快照，**Then** 快照含完整事件契約，且不含情境階段或其他預期答案。
+4. **Given** 有效設定與明示的巢狀 output path，其 parent 尚不存在，**When** 使用者產生遙測，**Then** 系統先完成驗證，再建立 parent directories 並發布兩份完整成品。
 
 ---
 
@@ -60,10 +67,13 @@
 1. **Given** 乾淨 checkout，**When** 貢獻者查看專案結構，**Then** 能分辨 Simulator、DSL、Evaluator、Fuzzer、情境與測試的責任邊界，且 M0 只有 Simulator 與 playback 具備業務行為。
 2. **Given** 符合規格的基準版本，**When** 自動化驗證執行，**Then** 所有 M0 驗收項目通過。
 3. **Given** 一個故意破壞事件契約或可重現性的隔離變體，**When** 同一套自動化驗證執行，**Then** gate 失敗並指出相對應的規格要求。
+4. **Given** CI workflow 已實際執行且 check 名稱已確認，**When** required status checks 已設定為 main 的生效合併規則，**Then** 缺少或失敗的必要檢查會阻擋 merge，成功的檢查可作為合併依據。
 
 ### Edge Cases
 
 - 情境設定缺少必要值、取樣頻率不大於零、初始電量超出 0–100%，或耗電率為負值時，產生流程必須在寫出事件成品前拒絕該設定並指出原因。
+- 任務終點未落在設定決定的取樣格上時，產生流程必須拒絕設定並指出終點對齊問題；檢查須在輸出時間量化與任何 output directory 建立之前完成。內部階段切換可不對齊取樣格。
+- 明示 output parent 不存在時，產生流程在設定與成品驗證成功後建立所需目錄；既有 final target 必須保留並拒絕覆寫。Parent 建立或成品發布失敗時，必須指出路徑且不得發布 partial artifact 目錄。
 - 階段切換落在取樣邊界時，ground truth MUST 以 `[start, end)` 將該快照歸入新階段；任務終點的降落快照納入最後階段。`sequence_number` 與 `mission_time_s` 仍必須各自保持連續且嚴格遞增，不得重複或遺漏快照。
 - 設定會讓電量在任務結束前低於 0% 時，產生流程必須拒絕該正常情境；事件成品不得含超出 0–100% 的電量。
 - playback 收到缺欄位、順序錯誤或無法配對 ground truth 的成品時，必須清楚拒絕播放，不得自行補值、平滑、插值或重新產生事件。
@@ -73,12 +83,12 @@
 
 ### Functional Requirements
 
-- **FR-001**: 系統 MUST 接受一份明確的正常情境設定與亂數種子，並在產生前驗證所有必要值與有效範圍。
+- **FR-001**: 系統 MUST 接受一份明確的正常情境設定與亂數種子，並在產生前驗證所有必要值、有效範圍與任務終點對齊取樣格；未對齊時 MUST 在任何 output directory 建立前拒絕設定。
 - **FR-002**: 基準情境 MUST 依序包含起飛、懸停、向北飛行、返航與降落，並在起飛原點結束。
 - **FR-003**: 基準情境 MUST 使用 2 m/s 的巡航速度與 0.2 m 的目標觀測間距，形成 10 Hz 的初始取樣基線；取樣率 MUST 可由情境設定調整。
 - **FR-004**: 每筆遙測快照 MUST 是單一載具在該任務時間的完整上游狀態估計（state-level snapshot），且只包含 `vehicle_id`、`sequence_number`、`mission_time_s`、`position_ned_m`、`velocity_ned_mps` 與 `battery_percent`。
 - **FR-005**: `vehicle_id` MUST 存在於每筆快照；M0 每份事件成品 MUST 只包含一個載具。
-- **FR-006**: 第一筆快照 MUST 使用 `sequence_number = 0` 與 `mission_time_s = 0`；後續序號 MUST 逐筆加一，任務時間 MUST 依設定的取樣率嚴格遞增。
+- **FR-006**: 第一筆快照 MUST 使用 `sequence_number = 0` 與 `mission_time_s = 0`；後續序號 MUST 逐筆加一，任務時間 MUST 依設定的取樣率嚴格遞增，並以完整取樣間隔抵達已對齊的任務終點。
 - **FR-007**: `position_ned_m` 與 `velocity_ned_mps` MUST 使用以起飛點為原點的 local NED（North-East-Down，北、東、下）；載具位於起飛點上方時 `down` MUST 為負值。
 - **FR-008**: 系統 MUST 從速度向量推導純量速率，不得在遙測快照中另存重複的純量速率欄位。
 - **FR-009**: 電量 MUST 由可設定的初始百分比與每秒線性綜合耗電率決定，所有輸出 MUST 保持在 0–100% 之間。
@@ -89,7 +99,7 @@
 - **FR-014**: playback MUST 提供播放、暫停、單步前進、重新開始與可調播放速度，並呈現 2D N/E 路徑、同步的高度／速度／電量時間圖，以及目前階段與任務時間。
 - **FR-015**: playback controls MUST NOT 改變事件順序、事件內容或 `mission_time_s`。
 - **FR-016**: 專案骨架 MUST 為 Simulator、DSL、Evaluator、Fuzzer、情境與測試保留清楚且互不混淆的責任邊界；M0 MUST NOT 實作 DSL、Evaluator 或 Fuzzer 行為。
-- **FR-017**: 每次 proposed change MUST 執行同一套自動化驗證，涵蓋事件契約、正常情境、可重現性、ground-truth 分離與 playback 唯讀邊界。
+- **FR-017**: 每次 proposed change MUST 執行同一套自動化驗證，涵蓋事件契約、正常情境、可重現性、ground-truth 分離與 playback 唯讀邊界。M0 MUST 在 workflow 實際 PASS 後以真實 check 名稱設定 main 的 required status checks；缺少或失敗的必要檢查 MUST 阻擋 merge。
 - **FR-018**: 自動化 gate MUST 在符合規格時通過，並在隔離驗證中遇到已知契約違規時失敗且指出對應要求。
 
 ### Scope Boundaries

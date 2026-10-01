@@ -112,9 +112,12 @@ tests/
 
 - [data-model.md](data-model.md) 定義 Scenario Configuration、Telemetry Snapshot、兩份 artifacts、Phase Interval 與 Playback Session lifecycle。
 - 時間使用 normalized source 的未量化數值重建精確有理 interval，以整數 tick 算出 `t_k` 再量化六位小數；`sample_interval_s` 是衍生 metadata，validator 不以其累加結果判定連續性。3 Hz 的明示驗證案例記於 data-model.md，T004／T005／T008／T009／T014 承接。
+- 終點以未量化的總時長 `T × r` 檢查整數 tick count；未對齊則在任何 output directory 建立前拒絕，內部階段切換仍可不對齊。T004／T008／T011／T012／T014 承接對齊、量化後看似對齊仍拒絕及 CLI 無寫入測試。
 - [M0 演算法說明](../../docs/algorithms/001-m0-telemetry-and-playback.md) 是實作模組的引用與白話橋接入口；包含 piecewise motion、numeric quantization 與 read-only playback 的來源與測試對應。
 - `contracts/*.schema.json` 使用 JSON Schema Draft 2020-12 描述外部 artifact shape；跨欄位、連續性、phase order 與 byte canonicalization 由 semantic validator 與 contract tests 補足。
 - [contracts/cli.md](contracts/cli.md) 固定 generate／playback command behavior、exit semantics 與 output destination rules。
+- Generate 在 arguments／設定／完整成品驗證後才建立明示的 output parent；既有 final target 拒絕覆寫，operational failure 清理 staging 並可保留已建立的 parents。T010／T011／T015／T016 承接巢狀路徑成功、拒絕無副作用與 parent 建立失敗測試。
+- 目前 GitHub 尚無 CI gating；T030 在實作 workflow 並取得真實 PASS 後，用實際 check 名稱設定 main 的 required status checks，T033 讀回生效規則與 PR checks 核對。`MERGEABLE / CLEAN` 僅表示合併狀態，不作為 CI gating 證據。
 - [quickstart.md](quickstart.md) 以明示的 `build/artifacts/` 與 pytest `tmp_path` 操作，沒有任何 shared storage 或 inherited destination。
 
 ## Post-Design Constitution Re-check

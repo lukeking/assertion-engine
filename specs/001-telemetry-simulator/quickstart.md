@@ -13,7 +13,10 @@ uv sync --locked
 
 ## 2. Generate the baseline normal mission
 
-Use an explicit repo-local destination. The generator refuses to overwrite it.
+Use an explicit repo-local destination. After configuration and artifact validation,
+the generator creates missing parent directories such as `build/artifacts/`, so this
+command also works from a clean checkout. It refuses to overwrite an existing final
+destination; invalid arguments or configuration create no parent directories.
 
 ```bash
 uv run assertion-sim generate \

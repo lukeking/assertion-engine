@@ -8,9 +8,22 @@ assertion-sim generate --scenario <scenario.toml> --output <new-directory>
 
 ### Preconditions
 
-- `--scenario` names a readable TOML file that passes `ScenarioConfiguration` validation.
+- `--scenario` names a readable TOML file that passes `ScenarioConfiguration` validation, including exact terminal alignment on the unquantized sample grid.
 - `--output` is explicit and does not already exist.
+- The output parent may be absent; the command creates missing parent directories after arguments, configuration and the complete artifact pair have passed validation.
 - The command never derives an output destination from `.env`, the current user, a network service or a shared storage setting.
+
+### Output preparation
+
+1. Validate arguments and configuration, including the unquantized terminal tick count; reject an existing final target without changing it.
+2. Generate both byte sequences in memory and validate the completed pair before filesystem creation.
+3. Create any missing directories in the caller-supplied output parent. An existing parent directory is reused.
+4. Stage beneath that parent and atomically publish the completed final directory.
+
+If parent creation fails, for example because an ancestor is a file or permissions
+deny creation, return exit `1` with a path diagnostic. On operational failure,
+remove staging created by this invocation. Parent directories already created may
+remain; do not remove parents or pre-existing content during cleanup.
 
 ### Success
 
@@ -35,8 +48,8 @@ Paths in stdout may reflect the user's supplied relative or absolute destination
 
 | Exit | Meaning | Side effect |
 |---:|---|---|
-| `1` | Unexpected operational/internal failure | Final output directory is absent |
-| `2` | Invalid arguments, invalid scenario, or existing output target | No artifact is published |
+| `1` | Parent creation, staging, publication, or other operational/internal failure | Final output directory is absent; invocation staging is cleaned; created parent directories may remain |
+| `2` | Invalid arguments, invalid scenario including terminal alignment, or existing output target | No artifact or parent directory is created; any existing target/content is unchanged |
 
 Diagnostics go to stderr and identify the invalid field or path without dumping the full scenario.
 
