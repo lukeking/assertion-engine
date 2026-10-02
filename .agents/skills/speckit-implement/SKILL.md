@@ -143,6 +143,11 @@ You **MUST** consider the user input before proceeding (if not empty).
    - **Task details**: ID, description, file paths, parallel markers [P]
    - **Execution flow**: Order and dependency requirements
 
+5a. **Delegation gate — required before implementation**:
+   - Read `~/.agents/skills/delegated-tdd/SKILL.md` §0, gate the entire remaining scope even for a single-task request, and announce the rung before step 6. Follow that skill's templates and review/verification protocol.
+   - Verify per-layer runners from the actual project files and `CLAUDE.local.md` when available. Before T002, setup has no project runner (L3, inline, degraded); after T002, the planned runner is `MPLBACKEND=Agg uv run pytest` for contract, unit, integration, and architecture tests. Confirm it is executable and re-gate the remaining scope. Require meaningful assertion-based RED from behavioral tests; sync/collection/lint success and import errors do not count.
+   - On Codex, perform the protocol's evidence checks explicitly; do not assume Claude lifecycle hooks enforce them.
+
 6. Execute implementation following the task plan:
    - **Phase-by-phase execution**: Complete each phase before moving to the next
    - **Respect dependencies**: Run sequential tasks in order, parallel tasks [P] can run together  
@@ -163,7 +168,7 @@ You **MUST** consider the user input before proceeding (if not empty).
    - For parallel tasks [P], continue with successful tasks, report failed ones
    - Provide clear error messages with context for debugging
    - Suggest next steps if implementation cannot proceed
-   - **IMPORTANT** For completed tasks, make sure to mark the task off as [X] in the tasks file.
+   - **IMPORTANT** Track tasks as `[ ]` not started → `[-]` implemented, awaiting review → `[X]` reviewed and main-verified. Commit implementation with `[-]`; promote to `[X]` only in a separate post-approval commit after the main agent re-runs the review evidence and resolves accepted findings, following the delegated-TDD protocol. Include the three-state legend in tasks.md when `[-]` is used.
 
 9. Completion validation:
    - Verify all required tasks are completed
