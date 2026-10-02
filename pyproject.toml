@@ -1,0 +1,31 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "assertion-engine"
+version = "0.1.0"
+description = "Deterministic telemetry simulation and read-only playback"
+readme = "README.md"
+requires-python = ">=3.14,<3.15"
+dependencies = [
+    "matplotlib>=3.11,<3.12",
+    "jsonschema>=4,<5",
+]
+
+[dependency-groups]
+dev = ["pytest>=8.4", "ruff>=0.12"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/assertion_engine"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--import-mode=importlib"
+
+[tool.ruff]
+target-version = "py314"
+line-length = 88
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]

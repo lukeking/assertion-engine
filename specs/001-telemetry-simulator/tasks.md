@@ -1,5 +1,7 @@
 # Tasks: M0 專案骨架與遙測模擬器
 
+> Markers: [ ] not started · [-] implemented, awaiting review · [X] reviewed + verified
+
 **Input**: `specs/001-telemetry-simulator/` 的 spec.md、plan.md、research.md、data-model.md、contracts/ 與 quickstart.md。
 **Prerequisites**: Specify／clarify／plan 已完成；所有路徑相對 repository root。
 **Tests**: spec.md 的 FR-017／FR-018 與 SC-001–SC-006 明確要求自動化與 rendered 驗證，因此包含測試任務。測試先寫，再完成相對應實作；記錄對應行為的失敗與通過，不能把缺少 dependency 的錯誤當作行為驗證。
@@ -20,8 +22,8 @@
 
 **Purpose**: 建立 plan.md 所指定的單一 Python `src` layout 與可執行 test runner。
 
-- [ ] T001 建立 `pyproject.toml`、`.python-version` 與 `src/assertion_engine/__init__.py`，使用 CPython 3.14、單一可安裝 package；建立 `src/assertion_engine/simulator/__init__.py`、`src/assertion_engine/playback/__init__.py`、`src/assertion_engine/dsl/__init__.py`、`src/assertion_engine/evaluator/__init__.py`、`src/assertion_engine/fuzzer/__init__.py`，後三者僅保留邊界。
-- [ ] T002 在 `pyproject.toml` 設定 Matplotlib 3.11.x、jsonschema 4.x、pytest 與 Ruff，設定 installed-package／src-layout 測試與 Ruff lint/format；以 uv 0.11.x 產生並提交 `uv.lock`，驗證 `uv sync --locked` 與 pytest collection 可執行，保留現有 `.gitignore` 的 `.venv`、cache、`build/` 與 `dist/` 忽略規則。
+- [-] T001 建立 `pyproject.toml`、`.python-version` 與 `src/assertion_engine/__init__.py`，使用 CPython 3.14、單一可安裝 package；建立 `src/assertion_engine/simulator/__init__.py`、`src/assertion_engine/playback/__init__.py`、`src/assertion_engine/dsl/__init__.py`、`src/assertion_engine/evaluator/__init__.py`、`src/assertion_engine/fuzzer/__init__.py`，後三者僅保留邊界。
+- [-] T002 在 `pyproject.toml` 設定 Matplotlib 3.11.x、jsonschema 4.x、pytest 與 Ruff，設定 installed-package／src-layout 測試與 Ruff lint/format；以 uv 0.11.x 產生並提交 `uv.lock`，驗證 `uv sync --locked` 與 pytest collection 可執行，保留現有 `.gitignore` 的 `.venv`、cache、`build/` 與 `dist/` 忽略規則。
 
 **Checkpoint CP1**: 乾淨環境能 sync locked dependencies，runner 可收集測試；尚未宣稱任何 domain behavior 通過。
 
