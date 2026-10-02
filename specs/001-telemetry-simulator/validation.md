@@ -18,3 +18,16 @@ Reviewed SHA: `f21bde3a061b6370c31c55f05fb58d46818c109d`. Independent review app
 T001/T002; main re-ran locked sync, isolated import, collection and Ruff in the pinned
 `/tmp/assertion-engine-review-cp1` checkout with matching results and a clean tree.
 Tasks are promoted in a separate post-approval commit.
+
+## CP2 — shared immutable contract
+
+- Tests use hand-authored six-tick fixture pair; expected states/bytes are literal.
+- Executor initial assertion RED: `81 failed, 1 passed in 0.93s`; helper RED:
+  `14 failed, 86 passed`; source precision pairing RED: `2 failed, 76 deselected`.
+- Raw process evidence: `/tmp/assertion-engine-cp2-{red,reusable-red,pair-red,green}.log`
+  (session-local; permanent contract tests provide rerunnable evidence).
+- Main: `MPLBACKEND=Agg uv run --locked pytest tests/contract/` →
+  `102 passed in 0.29s`; Ruff `All checks passed!`, `62 files already formatted`.
+- Covers offline Draft 2020-12 shape, exact source grid/phase ownership,
+  3 Hz/5 s and A1 cases, NED/battery, canonical bytes and source precision.
+- T003–T007 await independent review; no Simulator/playback business code yet.
