@@ -14,4 +14,7 @@
   `/tmp/assertion-engine-mpl-cache` because user cache/config directories are read-only
   in the sandbox. Product test destinations remain pytest-owned `tmp_path`.
 
-Review and main verification are recorded before task promotion.
+Reviewed SHA: `f21bde3a061b6370c31c55f05fb58d46818c109d`. Independent review approved
+T001/T002; main re-ran locked sync, isolated import, collection and Ruff in the pinned
+`/tmp/assertion-engine-review-cp1` checkout with matching results and a clean tree.
+Tasks are promoted in a separate post-approval commit.
