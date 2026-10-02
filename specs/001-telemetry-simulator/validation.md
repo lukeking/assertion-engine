@@ -30,4 +30,11 @@ Tasks are promoted in a separate post-approval commit.
   `102 passed in 0.29s`; Ruff `All checks passed!`, `62 files already formatted`.
 - Covers offline Draft 2020-12 shape, exact source grid/phase ownership,
   3 Hz/5 s and A1 cases, NED/battery, canonical bytes and source precision.
-- T003–T007 await independent review; no Simulator/playback business code yet.
+- Reviewed SHA: `630adc5589d6ba0901c6882e14070097dcbb25ba`; independent review approved.
+  Main read and re-ran `/tmp/assertion-engine-cp2-review-proof.py` in the pinned checkout:
+  baseline `102 passed in 0.29s`, Ruff passed, installed package resolved there, tree clean.
+- All five real-module mutations failed the intended unchanged tests: rounded phase
+  boundary (2 A1 failures), rounded motion ownership (2 A1 failures), source-input
+  rounding (1 FR-011 failure), rounded pair comparison (2 FR-011 failures), and rounded
+  interval accumulation (1 FR-006/3 Hz failure). No import/collection failures.
+- Main restored/verified the isolated checkout; T003–T007 promote in a separate commit.
