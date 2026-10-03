@@ -16,10 +16,13 @@ $ARGUMENTS
 
 You **MUST** consider the user input before proceeding (if not empty).
 
+This entrypoint is for Codex. When running in Claude, use
+`.claude/skills/speckit-implement/SKILL.md` instead of executing the steps in this file.
+
 ## Codex session scope
 
-Read `~/.agents/adapters/codex/session-workflow.md` before the steps below. Select one
-related reviewable slice, finish its review/remediation and local handoff, then end the
+When running in Codex, read `~/.agents/adapters/codex/session-workflow.md` before the
+steps below. Select one related reviewable slice, finish its review/remediation and local handoff, then end the
 turn. Apply the delegation gate to the entire remaining feature, as step 5a requires;
 that gate does not expand this session's selected slice.
 
