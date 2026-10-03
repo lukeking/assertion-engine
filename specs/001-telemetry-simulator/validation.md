@@ -52,5 +52,10 @@ Tasks are promoted in a separate post-approval commit.
   `1cc55ccd8ba9fa11d2c242704ad5503d0e82635bb22c1c2c654cbcffe540494b`.
 - All three ground-truth SHA-256 values:
   `b12d092c618dc03f06e63984cfba3a10d9c3d712535dca747784422c38e6fac7`.
-- Main independently read files and recomputed hashes/terminal contracts; T008–T016
-  await independent review.
+- Reviewed SHA: `2f53c1ce87daf38dec96326da7a0e3c58632a744`; independent review approved.
+  Main inspected and re-ran `/tmp/assertion-engine-cp3-review-proof.py`: 246 baseline
+  passes, Ruff passes, five targeted assertion failures, restored 246 passes and clean
+  pinned checkout. Mutations: rounded phase ceil, rounded interval ticks, rounded motion
+  ownership, parent creation before pair validation, and dangling-symlink existence.
+- Main independently read files/recomputed hashes and terminal contracts; T008–T016
+  promote in a separate post-approval commit.
