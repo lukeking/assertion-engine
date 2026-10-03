@@ -1,0 +1,14 @@
+schema_version = "1.0.0"
+scenario_name = "normal-flight"
+scenario_version = "1.0.0"
+seed = 42
+vehicle_id = "vehicle-001"
+target_altitude_m = 10.0
+climb_rate_mps = 1.0
+hover_duration_s = 5.0
+northbound_distance_m = 20.0
+cruise_speed_mps = 2.0
+descent_rate_mps = 1.0
+observation_spacing_m = 0.2
+initial_battery_percent = 100.0
+battery_drain_percent_per_s = 0.2

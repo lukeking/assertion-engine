@@ -38,3 +38,19 @@ Tasks are promoted in a separate post-approval commit.
   rounding (1 FR-011 failure), rounded pair comparison (2 FR-011 failures), and rounded
   interval accumulation (1 FR-006/3 Hz failure). No import/collection failures.
 - Main restored/verified the isolated checkout; T003–T007 promote in a separate commit.
+
+## CP3 — reproducible generation CLI
+
+- Executor assertion RED: `144 failed, 102 passed`, zero import/collection errors;
+  raw `/tmp/assertion-engine-cp3-red.log`. Main rerun: `246 passed in 3.50s`.
+- Scope: config types/ranges/precision, baseline/A1/3 Hz motion, four benchmark rates,
+  zero/unsampled phases, exact terminal rejection, argument/config no-parent effects,
+  existing file/directory/symlink preservation, parent/staging/write/publish failures.
+- Three actual installed CLI runs at `build/artifacts/m0-cp3-run-{1,2,3}` each produced
+  451 six-field snapshots; terminal time45, origin, zero velocity and 91% battery.
+- All three telemetry SHA-256 values:
+  `1cc55ccd8ba9fa11d2c242704ad5503d0e82635bb22c1c2c654cbcffe540494b`.
+- All three ground-truth SHA-256 values:
+  `b12d092c618dc03f06e63984cfba3a10d9c3d712535dca747784422c38e6fac7`.
+- Main independently read files and recomputed hashes/terminal contracts; T008–T016
+  await independent review.
