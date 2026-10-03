@@ -59,3 +59,19 @@ Tasks are promoted in a separate post-approval commit.
   ownership, parent creation before pair validation, and dangling-symlink existence.
 - Main independently read files/recomputed hashes and terminal contracts; T008–T016
   promote in a separate post-approval commit.
+
+## CP4 core — implemented, awaiting review
+
+- Executor assertion RED: `31 failed, 13 passed, 1 skipped`; error-boundary RED:
+  `2 failed, 47 passed, 1 skipped`. Raw `/tmp/assertion-engine-cp4-{red,red-errors}.log`.
+- Main registered `assertion-playback`, refreshed installed entrypoints, and ran fixture-only
+  playback unit/integration tests: `50 passed in 10.86s`, zero skips.
+- Loader/session/Matplotlib/CLI are implemented; no generator import. Legacy migration,
+  source pairing, actual artists/widgets, controls and immutable input hashes are tested.
+- Confirmed unguarded cadence bug in the actual session API: load the generated
+  `build/artifacts/m0-cp3-run-1` pair, inject `clock=lambda: clock[0]` with initial0,
+  call play(), set clock[0]=0.3, tick(). At10Hz cursor is2/time0.2; expected3/time0.3.
+  Float subtraction in `PlaybackSession.tick` loses the exact viewing boundary.
+  Add a literal fixture-based assertion RED and fix cadence arithmetic before review.
+- T017–T024 remain `[-]`; T025 generated-pair integration and T026 actual five-phase
+  rendered/GUI inspection remain `[ ]`. No independent CP4 review has run.

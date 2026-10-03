@@ -15,6 +15,7 @@ dependencies = [
 
 [project.scripts]
 assertion-sim = "assertion_engine.simulator.cli:main"
+assertion-playback = "assertion_engine.playback.cli:main"
 
 [dependency-groups]
 dev = ["pytest>=8.4", "ruff>=0.12"]
