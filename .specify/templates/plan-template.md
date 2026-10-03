@@ -23,7 +23,7 @@
 **Testing**: [e.g., pytest, XCTest, cargo test or NEEDS CLARIFICATION]  
 **Target Platform**: [e.g., Linux server, iOS 15+, WASM or NEEDS CLARIFICATION]
 **Project Type**: [e.g., library/cli/web-service/mobile-app/compiler/desktop-app or NEEDS CLARIFICATION]  
-**Performance Goals**: [MUST 以 p50/p95/p99/max 表述；「每秒 N 事件」為誤導性指標（憲章原則 II）。階梯見 TODO(LATENCY_LADDER)]  
+**Performance Goals**: [MUST 以 p50/p95/p99/max 表述；「每秒 N 事件」為誤導性指標（憲章原則 II）。階梯見憲章原則 II；L0–L3 的 100/50/20/10 ms 為 E2/E3 處理預算，效能 Gate 僅由 E1 建立]\
 **Constraints**: [domain-specific, e.g., <200ms p95, <100MB memory, offline-capable or NEEDS CLARIFICATION]  
 **Scale/Scope**: [domain-specific, e.g., 10k users, 1M LOC, 50 screens or NEEDS CLARIFICATION]
 
@@ -31,13 +31,13 @@
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-依 `.specify/memory/constitution.md` v1.0.0：
+依 `.specify/memory/constitution.md` v1.0.1：
 
 - [ ] **I. 對抗式驗證** — Fuzzer 是否獨立於 Evaluator？是否**未共用** DSL 語法樹
       或規則語意？「應該被偵測到」的期望結果是否由 Fuzzer 端獨立決定？
 - [ ] **II. 尾延遲優先** — 效能是否以 p50/p95/p99/**max** 表述而非平均吞吐？
       若使用 GC 環境，是否報告暫停分佈並將暫停期間錯過的事件計入偵測率？
-      （階梯本身仍為 TODO(LATENCY_LADDER)，此處應標記未定錨）
+      （階梯已推導但尚非效能 Gate；未實測的達成階數仍應標記未定錨）
 - [ ] **III. 語法由語料庫反推** — 是否已有 ≥10 條真實規則語料庫？
       語法是否由它反推，而非先設計再找例子？語料庫是否納入回歸測試？
 - [ ] **IV. 可追溯且可理解** — 是否同時具備文獻引用與白話橋接？

@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/lukeking/assertion-engine/main/specs/001-telemetry-simulator/contracts/ground-truth.schema.json",
+  "title": "Assertion Engine M0 scenario ground truth",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "artifact_version",
+    "scenario",
+    "terminal_time_s",
+    "phases"
+  ],
+  "properties": {
+    "artifact_version": {
+      "const": "2.0.0"
+    },
+    "scenario": {
+      "$ref": "common.schema.json#/$defs/scenarioSource"
+    },
+    "terminal_time_s": {
+      "type": "number",
+      "minimum": 0
+    },
+    "phases": {
+      "type": "array",
+      "minItems": 5,
+      "maxItems": 5,
+      "items": {
+        "$ref": "#/$defs/phaseInterval"
+      }
+    }
+  },
+  "$defs": {
+    "phaseInterval": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "start_time_s",
+        "end_time_s",
+        "start_sequence_number"
+      ],
+      "properties": {
+        "name": {
+          "enum": [
+            "takeoff",
+            "hover",
+            "northbound",
+            "return",
+            "landing"
+          ]
+        },
+        "start_time_s": {
+          "type": "number",
+          "minimum": 0
+        },
+        "end_time_s": {
+          "type": "number",
+          "minimum": 0
+        },
+        "start_sequence_number": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "First snapshot index at or after the phase start: ceil(s_i * r), deriving both values exactly from scenario source parameters before quantization."
+        }
+      }
+    }
+  }
+}

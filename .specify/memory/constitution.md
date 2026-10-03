@@ -1,25 +1,23 @@
 <!--
 Sync Impact Report
 ==================
-Version change: (template, unversioned) → 1.0.0
-Bump rationale: MAJOR — initial ratification; six principles newly defined.
+Version change: 1.0.0 → 1.0.1
+Bump rationale: PATCH — fill the existing M0 latency-ladder obligation with the
+accepted E2/E3 derivation; no principle or performance Gate is added or relaxed.
 
-Derived from, but NOT copied from, mapf-router's constitution v1.0.0. Transferred:
-adversarial validation, comprehensible traceability, reproducibility, evidence tiers.
-Reshaped for this project:
-  - Performance principle rewritten around TAIL latency, not throughput — this is the
-    only true real-time system of the three, and a mean-throughput target would hide
-    exactly the failure mode that matters (a GC pause missing an alert window).
-  - New principle III: the DSL grammar is derived from a corpus of real rules, not
-    designed first. It is the least reversible decision in the project.
+Modified principles:
+  - II. 尾延遲優先: replace TODO with the derived provisional ladder and its source.
+Added sections: none.
+Removed sections: none.
 
-Templates requiring updates:
-  ✅ updated  .specify/templates/plan-template.md
-  ⚠ pending  .specify/templates/spec-template.md   — 待首個 feature 走 specify 時確認
-  ⚠ pending  .specify/templates/tasks-template.md
-
-Deferred TODOs:
-  TODO(LATENCY_LADDER): 原則 II 的階數尚未推導，需 M0 定出遙測發布頻率後填入。
+Template synchronization:
+  - updated .specify/templates/plan-template.md — version and ladder references.
+  - checked .specify/templates/spec-template.md — no changed requirement to propagate.
+  - checked .specify/templates/tasks-template.md — no changed task category to propagate.
+  - .specify/templates/commands/ is absent; repo-local skills contain no ladder TODO.
+Runtime guidance:
+  - updated specs/001-telemetry-simulator/plan.md and tasks.md.
+Follow-up TODOs: none for this amendment; measured latency Gates remain future E1 work.
 -->
 
 # Stream Assertion Engine Constitution
@@ -61,9 +59,21 @@ Fuzzer MUST 獨立於 Rule Evaluator 之外實作：
   暫停期間錯過的事件 MUST 計入偵測率
 - 效能 MUST 以「階數 + 場景」表述，場景須指明遙測發布頻率與規則數量
 
-**TODO(LATENCY_LADDER)**：具體階數尚未推導。MUST 於 M0 定出遙測發布頻率後，
-依「一筆事件到下一筆事件之間可用的處理預算」反推填入。
-在此之前，效能宣稱一律標記為未定錨。
+M0 的基準為 2 m/s 巡航與 0.2 m 觀測間距，發布頻率為 `2 / 0.2 = 10 Hz`。
+依 `事件間隔 = 1 / 發布頻率` 反推下列階梯；規則數 10 是未來最小語料庫，
+M0 尚未實作 Evaluator 或量測其延遲。
+
+| 階數 | 發布頻率 | 未來規則數 | 觀測間距 | 事件間隔／未來 max budget | 證據 |
+|---|---:|---:|---:|---:|---|
+| L0 | 10 Hz | 10 | 0.20 m | 100 ms | E2 算術 |
+| L1 | 20 Hz | 10 | 0.10 m | 50 ms | E2 算術 + E3 階數選擇 |
+| L2 | 50 Hz | 10 | 0.04 m | 20 ms | E2 算術 + E3 階數選擇 |
+| L3 | 100 Hz | 10 | 0.02 m | 10 ms | E2 算術 + E3 階數選擇 |
+
+完整推導與後續量測欄位見
+[`research.md` 的 provisional latency ladder](../../specs/001-telemetry-simulator/research.md#provisional-latency-ladder-not-a-gate)。
+這些數值是處理預算，不是已達成的效能。任何階數升為效能 Gate MUST 由 E1
+建立；在實測前，達成階數與引擎延遲宣稱仍屬未定錨。
 
 **理由**：一次 GC 暫停就可能錯過告警窗口，而平均值會把它完全稀釋掉。
 守門人偶爾失效，等於沒有守門人。
@@ -151,4 +161,4 @@ MINOR 新增原則或章節、實質擴充指引；PATCH 措辭釐清。
 違反原則的設計 MUST 記錄理由或改採合規做法。複雜度 MUST 有正當理由——
 「之後可能會用到」不構成理由。
 
-**Version**: 1.0.0 | **Ratified**: 2026-07-20 | **Last Amended**: 2026-07-20
+**Version**: 1.0.1 | **Ratified**: 2026-07-20 | **Last Amended**: 2026-10-01
