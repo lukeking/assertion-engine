@@ -75,3 +75,28 @@ Tasks are promoted in a separate post-approval commit.
   Add a literal fixture-based assertion RED and fix cadence arithmetic before review.
 - T017–T024 remain `[-]`; T025 generated-pair integration and T026 actual five-phase
   rendered/GUI inspection remain `[ ]`. No independent CP4 review has run.
+
+## Architecture slice — implemented, awaiting review
+
+- T027/T029 assertion RED: `40 failed, 35 passed`; main GREEN: `75 passed in 0.85s`.
+- Static AST scanner resolves absolute/relative imports, aliases and package imports;
+  reserved DSL/Evaluator/Fuzzer behavior check is separate and permits docstrings/pass only.
+- Raw `/tmp/assertion-engine-boundary-{red,green}.log`; independent review has not run.
+
+## Combined pre-handoff check — 2026-10-03
+
+- `MPLBACKEND=Agg uv run --locked pytest` → `371 passed in 14.57s`, zero skips.
+- Ruff: `All checks passed!`; format: `78 files already formatted`.
+- This verifies currently written tests; the confirmed fractional cadence boundary gap
+  above is not yet covered or fixed. M0/CP4/CP5 acceptance is still incomplete.
+
+## CI preparation — not implemented yet
+
+- GitHub API verified current session admin permission and effective main ruleset
+  `20876648`: deletion, non-fast-forward and pull-request rules; no required checks yet.
+- Official release tags resolved through GitHub API (2026-10-02):
+  - actions/checkout v7.0.1: `3d3c42e5aac5ba805825da76410c181273ba90b1`.
+  - astral-sh/setup-uv v10.2.0: `c18668ad3cf93ea998bef934396af7bb5c839dc7`.
+- T030 still must implement workflow, obtain actual PASS/check names, then configure
+  required checks and read effective rules back. T028/T032 negative fixtures/mutations
+  and T033 clean-checkout/CI verification remain open.

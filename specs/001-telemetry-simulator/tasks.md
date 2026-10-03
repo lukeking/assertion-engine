@@ -91,12 +91,12 @@
 
 ### Tests for US3
 
-- [ ] T027 [P] [US3] 在 `tests/architecture/test_dependency_boundaries.py` 撰寫 module import／責任邊界檢查：Fuzzer 禁止依賴 DSL AST/grammar 或 Evaluator semantics，playback 禁止依賴 simulator，M0 的 DSL／Evaluator／Fuzzer 無業務行為；以測試內臨時 source tree 的 absolute／relative 禁止 import 正反例證明檢查有效。（depends on CP2）
+- [-] T027 [P] [US3] 在 `tests/architecture/test_dependency_boundaries.py` 撰寫 module import／責任邊界檢查：Fuzzer 禁止依賴 DSL AST/grammar 或 Evaluator semantics，playback 禁止依賴 simulator，M0 的 DSL／Evaluator／Fuzzer 無業務行為；以測試內臨時 source tree 的 absolute／relative 禁止 import 正反例證明檢查有效。（depends on CP2）
 - [ ] T028 [P] [US3] 在 `tests/fixtures/invalid_artifacts/` 建立 `extra-phase.telemetry.json`、`missing-field.telemetry.json`、`wrong-sequence.telemetry.json`、`mismatched-source.ground-truth.json` 與 `noncanonical.telemetry.json`，並在 `tests/contract/test_gate_rejection.py` 驗證各自拒絕與 FR／SC 對應；fixture 以 T003 為基礎手工改一處，不由 generator 定義預期違規。（depends on CP2）
 
 ### Implementation & Gate Proof for US3
 
-- [ ] T029 [US3] 在 `tests/architecture/test_dependency_boundaries.py` 完成獨立 AST/import boundary scanner，使 T027 的 production 檢查與臨時違規正反例都成立；掃描 `src/assertion_engine/fuzzer/`、`src/assertion_engine/playback/` 與保留 packages，不靠目錄存在或 grep 一種 import 寫法宣稱隔離。（depends on T027）
+- [-] T029 [US3] 在 `tests/architecture/test_dependency_boundaries.py` 完成獨立 AST/import boundary scanner，使 T027 的 production 檢查與臨時違規正反例都成立；掃描 `src/assertion_engine/fuzzer/`、`src/assertion_engine/playback/` 與保留 packages，不靠目錄存在或 grep 一種 import 寫法宣稱隔離。（depends on T027）
 - [ ] T030 [US3] 在 `.github/workflows/ci.yml` 建立 push／pull_request change gate：Ubuntu、CPython 3.14、uv 0.11.x、`uv sync --locked`、`uv run ruff format --check .`、`uv run ruff check .` 與 `MPLBACKEND=Agg uv run pytest`；Actions 使用實際查證的完整 commit SHA 加版本註解，CI 不依賴 GUI 或網路 schema resolution。先取得一次真實 workflow PASS 與實際 check 名稱，再將對應 required status checks 設為 main 的生效合併規則，讓 missing／failed checks 阻擋 merge；讀回規則確認，於 `CLAUDE.local.md` 與 `specs/001-telemetry-simulator/validation.md` 記錄 check 名稱／run URL／探測結果，不預設其他 repo 的 context。（depends on CP3、CP4、T028–T029）
 - [ ] T031 [US3] 在 `README.md` 記錄 Simulator／playback／DSL／Evaluator／Fuzzer／scenarios／tests 的責任、環境與兩個 CLI 範例、相同本地 gate 命令，連到 `specs/001-telemetry-simulator/quickstart.md`；明示 M0 範圍、canonical artifacts 與 E2/E3 latency ladder，不宣稱未量測的 real-time 效能。（depends on T030）
 - [ ] T032 [US3] 在兩個隔離 worktree／scratch checkout 分別注入事件契約違規（例如額外 snapshot phase）與 byte reproducibility 違規（例如同一輸入的序列化 bytes 隨呼叫次數改變），執行 T030 的未修改 gate；確認失敗源自對應 contract／三次 byte equality tests，而非 Ruff、import 或環境失敗，先確認各副本使用的 installed package 來自該副本，在 `specs/001-telemetry-simulator/validation.md` 記錄受審 commit、mutation、runner 摘要、失敗測試／FR/SC 與乾淨版本 PASS，不改主工作區 source。（depends on T030–T031）
