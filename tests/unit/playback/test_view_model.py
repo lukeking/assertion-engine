@@ -75,6 +75,173 @@ def a1_literal_pair(pair):
     return validate_pair(*pair)
 
 
+@pytest.fixture
+def ten_hz_pair(artifact_pair):
+    """Independent 10 Hz table, including each stored phase boundary."""
+    pair = deepcopy(artifact_pair)
+    states = [
+        ("0", "0", "0", [0, 0, -1], "100"),
+        ("0.1", "0", "-0.1", [0, 0, -1], "99.98"),
+        ("0.2", "0", "-0.2", [0, 0, 0], "99.96"),
+        ("0.3", "0", "-0.2", [0, 0, 0], "99.94"),
+        ("0.4", "0", "-0.2", [1, 0, 0], "99.92"),
+        ("0.5", "0.1", "-0.2", [1, 0, 0], "99.9"),
+        ("0.6", "0.2", "-0.2", [-1, 0, 0], "99.88"),
+        ("0.7", "0.1", "-0.2", [-1, 0, 0], "99.86"),
+        ("0.8", "0", "-0.2", [0, 0, 1], "99.84"),
+        ("0.9", "0", "-0.1", [0, 0, 1], "99.82"),
+        ("1", "0", "0", [0, 0, 0], "99.8"),
+    ]
+    for document in pair:
+        document["scenario"]["config"].update(
+            target_altitude_m=Decimal("0.2"),
+            hover_duration_s=Decimal("0.2"),
+            northbound_distance_m=Decimal("0.2"),
+            observation_spacing_m=Decimal("0.1"),
+            sample_rate_hz=10,
+            sample_interval_s=Decimal("0.1"),
+        )
+    pair[0]["snapshots"] = [
+        {
+            "vehicle_id": "vehicle-001",
+            "sequence_number": k,
+            "mission_time_s": Decimal(time),
+            "position_ned_m": [Decimal(north), 0, Decimal(down)],
+            "velocity_ned_mps": velocity,
+            "battery_percent": Decimal(battery),
+        }
+        for k, (time, north, down, velocity, battery) in enumerate(states)
+    ]
+    pair[1]["terminal_time_s"] = 1
+    for phase, start, end, boundary in zip(
+        pair[1]["phases"],
+        ["0", "0.2", "0.4", "0.6", "0.8"],
+        ["0.2", "0.4", "0.6", "0.8", "1"],
+        [0, 2, 4, 6, 8],
+    ):
+        phase.update(
+            start_time_s=Decimal(start),
+            end_time_s=Decimal(end),
+            start_sequence_number=boundary,
+        )
+    return validate_pair(*pair)
+
+
+@pytest.mark.parametrize(
+    ("wall_time", "cursor", "mission_time"),
+    [
+        (0.09999999999999999, 0, "0"),
+        (0.1, 1, "0.1"),
+        (0.10000000000000002, 1, "0.1"),
+        (0.29999999999999993, 2, "0.2"),
+        (0.3, 3, "0.3"),
+        (0.30000000000000004, 3, "0.3"),
+        (0.6999999999999998, 6, "0.6"),
+        (0.7, 7, "0.7"),
+        (0.7000000000000001, 7, "0.7"),
+        (0.9999999999999999, 9, "0.9"),
+        (1.0, 10, "1"),
+        (1.0000000000000002, 10, "1"),
+    ],
+)
+def test_ten_hz_exact_wall_clock_boundaries(
+    ten_hz_pair, wall_time, cursor, mission_time
+):
+    clock = Clock()
+    session = PlaybackSession(*ten_hz_pair, clock=clock)
+    session.play()
+    clock.now = wall_time
+    session.tick()
+    assert session.cursor == cursor
+    assert session.snapshot.mission_time_s == Decimal(mission_time)
+    assert session.snapshot is ten_hz_pair[0].snapshots[cursor]
+    session.tick()  # The same clock reading never advances an additional frame.
+    assert session.cursor == cursor
+    assert session.state == ("completed" if cursor == 10 else "playing")
+
+
+def test_ten_hz_repeated_ticks_do_not_drift(ten_hz_pair):
+    clock = Clock()
+    session = PlaybackSession(*ten_hz_pair, clock=clock)
+    session.play()
+    for wall_time, cursor, mission_time in [
+        (0.03, 0, "0"),
+        (0.09, 0, "0"),
+        (0.1, 1, "0.1"),
+        (0.1, 1, "0.1"),
+        (0.15, 1, "0.1"),
+        (0.2, 2, "0.2"),
+        (0.29, 2, "0.2"),
+        (0.3, 3, "0.3"),
+        (0.3, 3, "0.3"),
+        (0.4, 4, "0.4"),
+        (0.5, 5, "0.5"),
+        (0.6, 6, "0.6"),
+        (0.7, 7, "0.7"),
+        (0.8, 8, "0.8"),
+        (0.9, 9, "0.9"),
+        (1.0, 10, "1"),
+        (2.0, 10, "1"),
+    ]:
+        clock.now = wall_time
+        session.tick()
+        assert session.cursor == cursor
+        assert session.snapshot.mission_time_s == Decimal(mission_time)
+        assert session.snapshot is ten_hz_pair[0].snapshots[cursor]
+    assert session.state == "completed"
+
+
+def test_ten_hz_pause_resume_and_speed_preserve_partial_cadence(ten_hz_pair):
+    clock = Clock()
+    session = PlaybackSession(*ten_hz_pair, clock=clock)
+    session.play()
+    clock.now = 0.03
+    session.pause()
+    assert (session.state, session.cursor) == ("paused", 0)
+    clock.now = 100.03
+    session.tick()
+    assert session.cursor == 0
+    session.play()
+    clock.now = 100.1
+    session.set_speed(2)  # Settle 0.03 + 0.07 at the original speed.
+    assert session.cursor == 1
+    clock.now = 100.14999999999999
+    session.tick()
+    assert session.cursor == 1
+    clock.now = 100.15
+    session.tick()
+    assert session.cursor == 2
+    assert session.snapshot.mission_time_s == Decimal("0.2")
+    session.tick()
+    assert session.cursor == 2
+    clock.now = 100.175
+    session.pause()  # Preserve half a frame at speed 2.
+    assert (session.state, session.cursor) == ("paused", 2)
+    clock.now = 200.175
+    session.tick()
+    assert session.cursor == 2
+    session.play()
+    session.set_speed(0.5)
+    clock.now = 200.27499999999998
+    session.tick()
+    assert session.cursor == 2
+    clock.now = 200.275
+    session.tick()
+    assert session.cursor == 3
+    assert session.snapshot.mission_time_s == Decimal("0.3")
+    assert session.snapshot is ten_hz_pair[0].snapshots[3]
+    session.restart()
+    assert (session.state, session.cursor, session.speed) == ("ready", 0, 0.5)
+    session.play()
+    clock.now = 200.47499999999997
+    session.tick()
+    assert session.cursor == 0
+    clock.now = 200.475
+    session.tick()
+    assert session.cursor == 1
+    assert session.snapshot.mission_time_s == Decimal("0.1")
+
+
 def test_controls_preserve_partial_cadence_and_terminal(artifact_pair):
     clock = Clock()
     pair = validate_pair(*artifact_pair)

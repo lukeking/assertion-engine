@@ -8,6 +8,7 @@ The viewing clock controls when to flip, without changing any event or timeline.
 
 import math
 from collections.abc import Callable
+from fractions import Fraction
 from time import monotonic
 
 from assertion_engine.telemetry import (
@@ -53,7 +54,7 @@ class PlaybackSession:
         self._speed = _positive_speed(speed)
         self._clock = clock
         self._last_clock = None
-        self._progress = 0.0
+        self._progress = Fraction(0)
 
     @property
     def telemetry(self):
@@ -98,7 +99,7 @@ class PlaybackSession:
     def play(self):
         if self.state in ("playing", "completed"):
             return
-        self._last_clock = self._clock()
+        self._last_clock = Fraction(str(self._clock()))
         self._state = "playing"
 
     def pause(self):
@@ -110,7 +111,7 @@ class PlaybackSession:
     def step(self):
         """Advance exactly one event and stop automatic advancement."""
         self._cursor = min(self.cursor + 1, len(self.telemetry.snapshots) - 1)
-        self._progress = 0.0
+        self._progress = Fraction(0)
         self._last_clock = None
         self._state = (
             "completed"
@@ -120,7 +121,7 @@ class PlaybackSession:
 
     def restart(self):
         self._cursor = 0
-        self._progress = 0.0
+        self._progress = Fraction(0)
         self._last_clock = None
         self._state = "ready"
 
@@ -128,13 +129,14 @@ class PlaybackSession:
         """Consume stored event-time gaps with elapsed wall time at the current rate."""
         if self.state != "playing":
             return
-        now = self._clock()
-        self._progress += (now - self._last_clock) * self.speed
+        # Exact decimal readings avoid drift without advancing frames by a tolerance.
+        now = Fraction(str(self._clock()))
+        self._progress += (now - self._last_clock) * Fraction(str(self.speed))
         self._last_clock = now
         snapshots = self.telemetry.snapshots
         while self.cursor < len(snapshots) - 1:
-            gap = float(
-                snapshots[self.cursor + 1].mission_time_s - self.snapshot.mission_time_s
+            gap = Fraction(str(snapshots[self.cursor + 1].mission_time_s)) - Fraction(
+                str(self.snapshot.mission_time_s)
             )
             if self._progress < gap:
                 break
@@ -143,7 +145,7 @@ class PlaybackSession:
         if self.cursor == len(snapshots) - 1:
             self._state = "completed"
             self._last_clock = None
-            self._progress = 0.0
+            self._progress = Fraction(0)
 
     def set_speed(self, speed):
         validated = _positive_speed(speed)
