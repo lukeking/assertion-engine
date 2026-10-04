@@ -60,7 +60,7 @@ Tasks are promoted in a separate post-approval commit.
 - Main independently read files/recomputed hashes and terminal contracts; T008–T016
   promote in a separate post-approval commit.
 
-## CP4 core — implemented, awaiting review
+## CP4 core — reviewed and main-verified
 
 - Executor assertion RED: `31 failed, 13 passed, 1 skipped`; error-boundary RED:
   `2 failed, 47 passed, 1 skipped`. Raw `/tmp/assertion-engine-cp4-{red,red-errors}.log`.
@@ -68,13 +68,49 @@ Tasks are promoted in a separate post-approval commit.
   playback unit/integration tests: `50 passed in 10.86s`, zero skips.
 - Loader/session/Matplotlib/CLI are implemented; no generator import. Legacy migration,
   source pairing, actual artists/widgets, controls and immutable input hashes are tested.
-- Confirmed unguarded cadence bug in the actual session API: load the generated
-  `build/artifacts/m0-cp3-run-1` pair, inject `clock=lambda: clock[0]` with initial0,
-  call play(), set clock[0]=0.3, tick(). At10Hz cursor is2/time0.2; expected3/time0.3.
-  Float subtraction in `PlaybackSession.tick` loses the exact viewing boundary.
-  Add a literal fixture-based assertion RED and fix cadence arithmetic before review.
-- T017–T024 remain `[-]`; T025 generated-pair integration and T026 actual five-phase
-  rendered/GUI inspection remain `[ ]`. No independent CP4 review has run.
+- The original float-clock cadence defect is repaired in `f4435df`: literal 10 Hz
+  fixture tests first produced `4 failed, 19 passed in 0.27s`; main independently
+  reproduced `4 failed, 19 passed in 0.32s` against `841092e` in an isolated checkout.
+  This covers the late cursor at wall time 0.3, early terminal completion immediately
+  before 1, repeated ticks and lost partial pause/resume progress. Viewing-clock
+  endpoints, speed and saved timestamp gaps use exact decimal-string rational values;
+  there is no epsilon, mission-time rewrite or source-timeline regeneration.
+- First independent full-slice review, `286c851..f4435df`, rejected two weak tests:
+  substituting rounded interval metadata still passed all 64 playback tests, while
+  removing the actual CLI registration and reinstalling passed 63 with one skip.
+  Main replayed the complete reviewer proof and independently confirmed both findings.
+- Regression commit `7669417` adds literal saved 3 Hz gaps, repeated ticks and partial
+  pause/speed cases, and requires installed CLI registration. Main's isolated RED is
+  `6 failed, 6 passed, 23 deselected in 0.21s` for rounded interval substitution and
+  `1 failed in 0.38s` for actual registration removal/reinstall. Restored playback:
+  `76 passed in 11.39s`, zero skips.
+- Reviewed SHA: `76694178e80c376a3a96772092c6656fbbe65d6d`; second independent review
+  approved T017–T024 over the complete `286c851..7669417` playback slice, including
+  original `80daac8`, shared entry-point registration, tests and status records.
+- Main inspected and replayed `build/cp4-review-round2/proof.py` in the pinned
+  `/tmp/assertion-engine-review-cp4-core` checkout: baseline `76 passed in 11.77s`,
+  independent probes `14 passed in 2.19s`, restored `76 passed in 11.52s`, zero skips.
+  Import paths and installed metadata resolve to that checkout; final tracked tree is
+  clean and all mutated files byte-match the reviewed SHA.
+- Eight actual mutations failed their intended behavior assertions: original float
+  cadence, early epsilon, rounded-time phase selection, first eligible phase,
+  canonical-byte bypass, initial headless frame, rounded interval substitution, and
+  removal/reinstallation of the real CLI registration. The last two produce
+  `6 failed, 6 passed, 23 deselected in 0.20s` and `1 failed, 75 passed in 10.02s`.
+  No import, collection, syntax or lint failure serves as mutation evidence.
+- Independent probes verify complete domain/source and input-byte equality after
+  controls, A1 ownership/source precision, large monotonic-clock origins, fractional
+  speed/pause cadence, and real staging/render/publication error cleanup. Full suite
+  after remediation: `397 passed in 16.41s`; Ruff `All checks passed!`, format
+  `78 files already formatted`.
+- Reviewer reports/proofs/logs and main replay evidence are preserved under ignored
+  `build/cp4-core-review/{round1-reviewer,round1-main,remediation,round2-reviewer,round2-main}/`;
+  `main-evidence.json` records the verification summaries. Restore each historical
+  proof under its original `build/cp4-review*/` path in a checkout pinned to its SHA
+  before replaying; permanent regression tests remain in the committed suite.
+- T017–T024 promote to `[X]` in a separate post-approval commit. T025 generated-pair
+  integration and T026 actual five-phase rendered/GUI inspection remain `[ ]`.
+  This approves core implementation; complete CP4/M0 acceptance remains pending.
 
 ## Architecture slice — implemented, awaiting review
 
@@ -87,8 +123,8 @@ Tasks are promoted in a separate post-approval commit.
 
 - `MPLBACKEND=Agg uv run --locked pytest` → `371 passed in 14.57s`, zero skips.
 - Ruff: `All checks passed!`; format: `78 files already formatted`.
-- This verifies currently written tests; the confirmed fractional cadence boundary gap
-  above is not yet covered or fixed. M0/CP4/CP5 acceptance is still incomplete.
+- That historical run preceded the cadence repair and independent core approval
+  recorded above. Architecture review and full CP4/CP5/M0 acceptance remain pending.
 
 ## CI preparation — not implemented yet
 
