@@ -75,6 +75,101 @@ def a1_literal_pair(pair):
     return validate_pair(*pair)
 
 
+@pytest.mark.parametrize(
+    ("wall_time", "cursor", "mission_time"),
+    [
+        (0.33333299999999994, 0, "0"),
+        (0.333333, 1, "0.333333"),
+        (0.33333300000000005, 1, "0.333333"),
+        (0.666666, 1, "0.333333"),
+        (0.6666669999999999, 1, "0.333333"),
+        (0.666667, 2, "0.666667"),
+        (0.999999, 2, "0.666667"),
+        (1.0, 3, "1"),
+        (3.9999999999999996, 11, "3.666667"),
+        (4.0, 12, "4"),
+    ],
+)
+def test_FR013_SC004_three_hz_uses_saved_event_gaps(
+    artifact_pair, wall_time, cursor, mission_time
+):
+    pair = a1_literal_pair(artifact_pair)
+    clock = Clock()
+    session = PlaybackSession(*pair, clock=clock)
+    session.play()
+    clock.now = wall_time
+    session.tick()
+    assert session.cursor == cursor
+    assert session.snapshot.mission_time_s == Decimal(mission_time)
+    assert session.snapshot is pair[0].snapshots[cursor]
+    session.tick()
+    assert session.cursor == cursor
+    assert session.state == ("completed" if cursor == 12 else "playing")
+
+
+def test_FR013_SC004_three_hz_repeated_ticks_use_saved_event_gaps(artifact_pair):
+    pair = a1_literal_pair(artifact_pair)
+    clock = Clock()
+    session = PlaybackSession(*pair, clock=clock)
+    session.play()
+    for wall_time, cursor in [
+        (0.1, 0),
+        (0.333333, 1),
+        (0.666666, 1),
+        (0.666667, 2),
+        (0.9, 2),
+        (1.0, 3),
+        (1.333333, 4),
+        (1.666667, 5),
+        (2.0, 6),
+        (2.333333, 7),
+        (2.666667, 8),
+        (3.0, 9),
+        (3.333333, 10),
+        (3.666667, 11),
+        (4.0, 12),
+    ]:
+        clock.now = wall_time
+        session.tick()
+        assert session.cursor == cursor
+        assert session.snapshot is pair[0].snapshots[cursor]
+    assert session.state == "completed"
+
+
+def test_FR013_SC004_three_hz_speed_and_pause_preserve_partial_saved_gap(artifact_pair):
+    pair = a1_literal_pair(artifact_pair)
+    clock = Clock()
+    clock.now = 10.0
+    session = PlaybackSession(*pair, clock=clock)
+    session.play()
+    clock.now = 10.2
+    session.set_speed(2)
+    assert session.cursor == 0
+    clock.now = 10.2666664
+    session.tick()
+    assert session.cursor == 0
+    clock.now = 10.2666665
+    session.tick()
+    assert session.cursor == 1
+    clock.now = 10.4333335
+    session.tick()
+    assert session.cursor == 2
+    clock.now = 10.4833335
+    session.pause()
+    assert (session.state, session.cursor) == ("paused", 2)
+    clock.now = 20.4833335
+    session.play()
+    session.set_speed(0.5)
+    clock.now = 20.949999499999997
+    session.tick()
+    assert session.cursor == 2
+    clock.now = 20.9499995
+    session.tick()
+    assert session.cursor == 3
+    assert session.snapshot is pair[0].snapshots[3]
+    assert session.snapshot.mission_time_s == Decimal("1")
+
+
 @pytest.fixture
 def ten_hz_pair(artifact_pair):
     """Independent 10 Hz table, including each stored phase boundary."""

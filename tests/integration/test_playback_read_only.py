@@ -246,8 +246,7 @@ def test_unexpected_input_io_failure_is_operational_exit_one(
 
 def test_installed_script_entrypoint(tmp_path, artifact_pair):
     registered = importlib.metadata.entry_points(group="console_scripts")
-    if "assertion-playback" not in registered.names:
-        pytest.skip("main must register playback after simulator releases pyproject")
+    assert "assertion-playback" in registered.names
     entry = registered["assertion-playback"]
     assert entry.value == "assertion_engine.playback.cli:main"
     paths = write_pair(tmp_path, artifact_pair)
