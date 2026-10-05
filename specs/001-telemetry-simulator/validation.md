@@ -112,12 +112,35 @@ Tasks are promoted in a separate post-approval commit.
   integration and T026 actual five-phase rendered/GUI inspection remain `[ ]`.
   This approves core implementation; complete CP4/M0 acceptance remains pending.
 
-## Architecture slice — implemented, awaiting review
+## Architecture slice — implemented, awaiting re-review
 
 - T027/T029 assertion RED: `40 failed, 35 passed`; main GREEN: `75 passed in 0.85s`.
 - Static AST scanner resolves absolute/relative imports, aliases and package imports;
   reserved DSL/Evaluator/Fuzzer behavior check is separate and permits docstrings/pass only.
-- Raw `/tmp/assertion-engine-boundary-{red,green}.log`; independent review has not run.
+- Initial process logs: `/tmp/assertion-engine-boundary-{red,green}.log`.
+- First independent full-slice review, `286c851..a28d180`, rejected one weak test:
+  removing Fuzzer from the scanner's reserved-package tuple also removed its test
+  cases. The unchanged architecture runner still reported `67 passed`, even after
+  adding prohibited production Fuzzer behavior. Main reproduced baseline/restored
+  `75 passed` and both incorrect-green states in its own pinned checkout.
+- Main replayed the other eight scanner/production mutations: each failed intended
+  FR-016 assertions without import, syntax or collection errors. Independent literal
+  probes: `57 passed, 0 failed`; restored `75 passed in 0.59s`, zero skips,
+  with all 115 tracked files byte-equal to `a28d180`.
+- Remediation freezes DSL/Evaluator/Fuzzer names independently in behavioral test
+  parameterization and the production existence check. Main's clean changed suite:
+  `75 passed in 0.62s`; Ruff `All checks passed!`, `1 file already formatted`.
+- Main independently replayed the test-freeze proof: deleting any required package
+  retains all 75 cases and produces `5 failed, 70 passed`; the previously escaped
+  Fuzzer business-behavior counterexample now produces the same assertion RED.
+  With the intact registry, injected Fuzzer behavior fails the production assertion
+  (`1 failed, 74 passed`). Restored `75 passed in 0.58s`, zero skips, Ruff passes;
+  the installed package and scanner resolve to main's isolated `main-red` checkout.
+  T027/T029 remain `[-]` until the complete slice is independently approved and
+  main replays its evidence.
+- First reviewer and main proof scripts, mutation patches and raw logs are under
+  `build/architecture-review/{reviewer-evidence,main-evidence}/`; test-freeze evidence
+  is under `build/architecture-review/{remediation-evidence,main-remediation}/`.
 
 ## Combined pre-handoff check — 2026-10-03
 

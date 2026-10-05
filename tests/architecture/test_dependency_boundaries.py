@@ -287,7 +287,7 @@ def test_FR016_scanner_reports_all_forbidden_targets_with_source_locations(tmp_p
     ]
 
 
-@pytest.mark.parametrize("package", RESERVED_PACKAGES)
+@pytest.mark.parametrize("package", ("dsl", "evaluator", "fuzzer"))
 @pytest.mark.parametrize(
     ("source", "node_type"),
     [
@@ -306,7 +306,7 @@ def test_FR016_reserved_packages_reject_executable_m0_content(
     assert reserved_behavior_violations(package_root) == [(relative_path, 1, node_type)]
 
 
-@pytest.mark.parametrize("package", RESERVED_PACKAGES)
+@pytest.mark.parametrize("package", ("dsl", "evaluator", "fuzzer"))
 @pytest.mark.parametrize(
     "source", ["", "# Reserved for a later milestone.\n", '"""Reserved."""\npass\n']
 )
@@ -322,6 +322,6 @@ def test_FR016_production_dependency_boundaries():
 
 
 def test_FR016_production_future_packages_are_empty():
-    for package in RESERVED_PACKAGES:
+    for package in ("dsl", "evaluator", "fuzzer"):
         assert (PACKAGE_ROOT / package / "__init__.py").is_file()
     assert reserved_behavior_violations(PACKAGE_ROOT) == []
