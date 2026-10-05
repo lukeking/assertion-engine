@@ -112,7 +112,7 @@ Tasks are promoted in a separate post-approval commit.
   integration and T026 actual five-phase rendered/GUI inspection remain `[ ]`.
   This approves core implementation; complete CP4/M0 acceptance remains pending.
 
-## Architecture slice — implemented, awaiting re-review
+## Architecture slice — reviewed and main-verified
 
 - T027/T029 assertion RED: `40 failed, 35 passed`; main GREEN: `75 passed in 0.85s`.
 - Static AST scanner resolves absolute/relative imports, aliases and package imports;
@@ -136,18 +136,32 @@ Tasks are promoted in a separate post-approval commit.
   With the intact registry, injected Fuzzer behavior fails the production assertion
   (`1 failed, 74 passed`). Restored `75 passed in 0.58s`, zero skips, Ruff passes;
   the installed package and scanner resolve to main's isolated `main-red` checkout.
-  T027/T029 remain `[-]` until the complete slice is independently approved and
-  main replays its evidence.
+- Reviewed SHA: `aa2677545a19d674b74c82c893c923b9621fa497`; second fresh independent
+  review approved the complete `286c851..aa26775` slice, including original `f7cc270`,
+  shared status files and the committed test-freeze repair.
+- Main read and replayed the complete second-round proof in its own pinned checkout:
+  baseline `75 passed in 0.62s`, restored `75 passed in 0.67s`, zero skips/errors.
+  All 19 mutations failed the intended FR-016 assertions while preserving the same
+  75 collected IDs and frozen test functions/decorators/literal inputs. These cover
+  registry loss, the Fuzzer counterexample, import resolution/traversal/prefix rules,
+  production behavior/prohibited imports and missing required initializers.
+- Main independently verified `103` literal probes, its installed source paths and
+  before/after byte equality for all 115 tracked files. The exact architecture runner
+  and Ruff lint/format also pass. T027/T029 promote in a separate post-approval commit;
+  CI wiring and remaining full M0 acceptance are outside this slice's approval.
 - First reviewer and main proof scripts, mutation patches and raw logs are under
   `build/architecture-review/{reviewer-evidence,main-evidence}/`; test-freeze evidence
   is under `build/architecture-review/{remediation-evidence,main-remediation}/`.
+  Second-round scripts, raw logs/XML, collection IDs, patches and byte manifests are
+  under `build/architecture-review/{round2-reviewer-evidence,round2-main-evidence}/`.
 
 ## Combined pre-handoff check — 2026-10-03
 
 - `MPLBACKEND=Agg uv run --locked pytest` → `371 passed in 14.57s`, zero skips.
 - Ruff: `All checks passed!`; format: `78 files already formatted`.
 - That historical run preceded the cadence repair and independent core approval
-  recorded above. Architecture review and full CP4/CP5/M0 acceptance remain pending.
+  recorded above. Architecture was still awaiting review at that historical sample;
+  its later approval is recorded above. Full CP4/CP5/M0 acceptance remains pending.
 
 ## CI preparation — not implemented yet
 
