@@ -109,10 +109,11 @@ Tasks are promoted in a separate post-approval commit.
   proof under its original `build/cp4-review*/` path in a checkout pinned to its SHA
   before replaying; permanent regression tests remain in the committed suite.
 - T017–T024 promote to `[X]` in a separate post-approval commit. T025 generated-pair
-  integration and T026 actual five-phase rendered/GUI inspection remain `[ ]`.
-  This approves core implementation; complete CP4/M0 acceptance remains pending.
+  integration and T026 actual five-phase rendered/GUI inspection were pending at
+  that core-review checkpoint; their completed acceptance is recorded below.
+  This core approval alone did not complete CP4/M0 acceptance.
 
-## CP4 acceptance — T025/T026 execution, independent review pending
+## CP4 acceptance — T025/T026 reviewed and main-verified
 
 - Product baseline: `0d856dcf062db97041fc5b0393f51ed6f55b369d`; all tracked
   non-Markdown files byte-match that SHA (`build/playback-acceptance/source-identity.json`).
@@ -165,7 +166,29 @@ Tasks are promoted in a separate post-approval commit.
   retry command and replay boundaries are in `build/playback-acceptance/README.md`.
   Raw commands, exit codes, environment flags, PNG/data hashes and visual inspection
   are preserved in that evidence directory (`artifact-manifest.json`, `visual-inspection.json`).
-  Independent fresh review and main's final replay remain pending; tasks are unchanged.
+- Independent fresh review APPROVED without findings, pinned to
+  `ffc5e6ae5dff66127cc6602db05f716cbfaa94b3`, covering the complete
+  `0d856dc..ffc5e6a` acceptance slice. Reviewer ran 76 tests before, 76 after
+  acceptance and 76 after restoration, zero skips; actual image inspection and
+  native Tk retry passed (13 controls, 11 events, 49 real ticks).
+- Main replayed the unchanged reviewer `proof.py` (SHA-256
+  `15d2b8bc3f68284ac4d55777c114cc80f053263892edac7597eeea6cc9d4b42c`)
+  in its own checkout pinned to the reviewed SHA. Initial locked sync timed out
+  with an empty cache; offline bootstrap from the existing cache succeeded, followed
+  by a fresh locked sync with `UV_NO_SYNC` removed and verified editable source paths.
+  BEFORE: `76 passed in 19.48s`; AFTER: `76 passed in 14.69s`; restored:
+  `76 passed in 14.99s`, zero skips. Native Tk passed 13 controls/11 events/48 ticks.
+  All 451 saved events, input/domain byte equality, unchanged hashes and CLI/view
+  terminal PNG equality pass. Fresh phase/terminal PNGs byte-match the reviewer’s
+  inspected images; main also opened the fresh actual Tk terminal canvas.
+- Reviewer and main each added one metre to the displayed north marker. The unchanged
+  existing rendering test failed at `assert [2.0] == [1]` (main: `1 failed in 2.06s`),
+  demonstrating a behavior assertion failure. Restoration leaves all 115 tracked
+  files byte-equal to the reviewed SHA and the isolated checkouts clean.
+- Preserved review report, proof, raw commands/results, mutation patch, byte manifests
+  and artifacts: `build/playback-acceptance-{reviewer,main}-evidence/`; original executor
+  evidence: `build/playback-acceptance-executor-evidence/`. T025/T026 promote to `[X]`
+  in a separate post-approval commit. CP4 is complete; CP5 and full M0 remain pending.
 
 ## Architecture slice — reviewed and main-verified
 
@@ -216,7 +239,8 @@ Tasks are promoted in a separate post-approval commit.
 - Ruff: `All checks passed!`; format: `78 files already formatted`.
 - That historical run preceded the cadence repair and independent core approval
   recorded above. Architecture was still awaiting review at that historical sample;
-  its later approval is recorded above. Full CP4/CP5/M0 acceptance remains pending.
+  its later approval and completed CP4 acceptance are recorded above.
+  CP5 and full M0 acceptance remain pending.
 
 ## CI preparation — not implemented yet
 
