@@ -112,6 +112,61 @@ Tasks are promoted in a separate post-approval commit.
   integration and T026 actual five-phase rendered/GUI inspection remain `[ ]`.
   This approves core implementation; complete CP4/M0 acceptance remains pending.
 
+## CP4 acceptance — T025/T026 execution, independent review pending
+
+- Product baseline: `0d856dcf062db97041fc5b0393f51ed6f55b369d`; all tracked
+  non-Markdown files byte-match that SHA (`build/playback-acceptance/source-identity.json`).
+  This verification slice changes no product or tests and has no manufactured TDD RED.
+- Fresh `uv sync --locked`, with `UV_NO_SYNC` removed: `Resolved 23 packages in 1ms`,
+  `Checked 22 packages in 0.48ms`, exit 0. Exact playback runner:
+  `uv run --locked pytest -p no:cacheprovider --basetemp <explicit-build-directory>
+  tests/unit/playback/ tests/integration/test_playback_read_only.py`.
+  BEFORE: `76 passed in 11.27s`; AFTER: `76 passed in 10.75s`, zero skips, exit 0.
+  Literal fixture tests load saved JSON and have no generator dependency.
+- Reused the existing US1 pair in `build/artifacts/m0-playback-acceptance-20261005/`;
+  preserved historical generation/pytest logs. Before/after telemetry SHA-256:
+  `1cc55ccd8ba9fa11d2c242704ad5503d0e82635bb22c1c2c654cbcffe540494b`;
+  ground truth: `b12d092c618dc03f06e63984cfba3a10d9c3d712535dca747784422c38e6fac7`.
+  Canonical whole-domain bytes equal each input before and after controls and reload.
+- Agg registered callbacks/fake viewing clock: ready → play → snapshot 12/time 1.2
+  → pause and stable cursor through 99 wall seconds → step to 13/time 1.3 → 4x
+  → resume to 23/time 2.3 → restart → completed 450/time 45 → stable completed
+  controls → restart. All 451 saved snapshots retain exact identity, order, time and
+  phase. `control-sequence.json`, `snapshot-traversal.json`, `artist-evidence.json`,
+  `acceptance-evidence.json` and `domain-{before,after}-{0,1}.json` contain the raw proof
+  under `build/playback-acceptance/`. This callback evidence alone is not GUI interaction.
+- Actual 1440×960 images in the same artifact directory: `phase-takeoff.png` (5 s),
+  `phase-hover.png` (12.5 s), `phase-northbound.png` (20 s), `phase-return.png` (30 s),
+  `phase-landing.png` (40 s), `terminal-view.png` and installed CLI `terminal.png`
+  (45 s). The two terminal PNGs are byte-equal after resetting the view slider to
+  CLI default 1x. Executor actually viewed all seven; main separately reported actual
+  full-size inspection of the five phase images and CLI terminal. Phase/time labels
+  are readable, five bands appear in order, all cursors synchronize, the northbound
+  and return markers are at north 10 m, and the terminal marker is at the origin
+  with altitude/speed zero and battery 91%. Battery declines linearly.
+- Sandbox display access initially failed with socket `EPERM`; raw probe retained in
+  `build/playback-acceptance/sandbox-gui-probe/`. Host retry opened real TkAgg:
+  display valid/socket connected, 13 control checkpoints, 11 native Tk release events,
+  48 actual TimerTk ticks. Tk canvas button/slider events exercised play, pause, one
+  saved-event step, speed, resume, restart, completion, stable terminal controls and
+  restart after completion through `MatplotlibView.show()`/Tk mainloop and real clock.
+  Inputs/domain bytes remained equal. This is automated native GUI interaction;
+  no human manual interaction is claimed. `gui-evidence.json`, `gui-control-sequence.json`,
+  `gui-live-timer.json`, `gui-widget-events.json`, `gui-host-run.*` preserve the proof.
+  Executor also viewed actual Tk pixels `gui-terminal-canvas.png` (1200×800) and
+  rendered `gui-terminal-view.png` (1440×960), both in the artifact directory.
+  Main also reported actual Tk canvas inspection: terminal label/marker/plots are readable.
+- Final Ruff repo: `All checks passed!`, `78 files already formatted`; explicit
+  ignored driver/replay: `All checks passed!`, `2 files already formatted`, exit 0.
+  The first replay stopped only at three driver E501 string lines; raw failure remains
+  in `replay.*`/`driver-ruff-check.*`. Strings were wrapped and the four final Ruff
+  checks recorded under `final-*-result.json` and corresponding raw stdout/stderr.
+- Replay: `.venv/bin/python -B build/playback-acceptance/replay.py`; exact host-GUI
+  retry command and replay boundaries are in `build/playback-acceptance/README.md`.
+  Raw commands, exit codes, environment flags, PNG/data hashes and visual inspection
+  are preserved in that evidence directory (`artifact-manifest.json`, `visual-inspection.json`).
+  Independent fresh review and main's final replay remain pending; tasks are unchanged.
+
 ## Architecture slice — reviewed and main-verified
 
 - T027/T029 assertion RED: `40 failed, 35 passed`; main GREEN: `75 passed in 0.85s`.
