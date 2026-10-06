@@ -92,7 +92,7 @@
 ### Tests for US3
 
 - [X] T027 [P] [US3] 在 `tests/architecture/test_dependency_boundaries.py` 撰寫 module import／責任邊界檢查：Fuzzer 禁止依賴 DSL AST/grammar 或 Evaluator semantics，playback 禁止依賴 simulator，M0 的 DSL／Evaluator／Fuzzer 無業務行為；以測試內臨時 source tree 的 absolute／relative 禁止 import 正反例證明檢查有效。（depends on CP2）
-- [ ] T028 [P] [US3] 在 `tests/fixtures/invalid_artifacts/` 建立 `extra-phase.telemetry.json`、`missing-field.telemetry.json`、`wrong-sequence.telemetry.json`、`mismatched-source.ground-truth.json` 與 `noncanonical.telemetry.json`，並在 `tests/contract/test_gate_rejection.py` 驗證各自拒絕與 FR／SC 對應；fixture 以 T003 為基礎手工改一處，不由 generator 定義預期違規。（depends on CP2）
+- [-] T028 [P] [US3] 在 `tests/fixtures/invalid_artifacts/` 建立 `extra-phase.telemetry.json`、`missing-field.telemetry.json`、`wrong-sequence.telemetry.json`、`mismatched-source.ground-truth.json` 與 `noncanonical.telemetry.json`，並在 `tests/contract/test_gate_rejection.py` 驗證各自拒絕與 FR／SC 對應；fixture 以 T003 為基礎手工改一處，不由 generator 定義預期違規。（depends on CP2）
 
 ### Implementation & Gate Proof for US3
 

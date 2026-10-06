@@ -1,0 +1,31 @@
+{
+  "artifact_version": "2.0.0",
+  "scenario": {
+    "name": "fixture-flight",
+    "version": "1.0.0",
+    "seed": 43,
+    "config": {
+      "schema_version": "1.0.0",
+      "vehicle_id": "vehicle-001",
+      "target_altitude_m": 1,
+      "climb_rate_mps": 1,
+      "hover_duration_s": 1,
+      "northbound_distance_m": 1,
+      "cruise_speed_mps": 1,
+      "descent_rate_mps": 1,
+      "observation_spacing_m": 1,
+      "sample_rate_hz": 1,
+      "sample_interval_s": 1,
+      "initial_battery_percent": 100,
+      "battery_drain_percent_per_s": 0.2
+    }
+  },
+  "terminal_time_s": 5,
+  "phases": [
+    {"name": "takeoff", "start_time_s": 0, "end_time_s": 1, "start_sequence_number": 0},
+    {"name": "hover", "start_time_s": 1, "end_time_s": 2, "start_sequence_number": 1},
+    {"name": "northbound", "start_time_s": 2, "end_time_s": 3, "start_sequence_number": 2},
+    {"name": "return", "start_time_s": 3, "end_time_s": 4, "start_sequence_number": 3},
+    {"name": "landing", "start_time_s": 4, "end_time_s": 5, "start_sequence_number": 4}
+  ]
+}
