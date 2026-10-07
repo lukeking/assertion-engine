@@ -345,3 +345,36 @@ Tasks are promoted in a separate post-approval commit.
   payload, checks, run responses and logs: `build/t030-main-evidence/`;
   executor action definitions and command summaries: `build/t030-executor-evidence/`.
   T030 remains `[-]` pending independent review and main replay.
+
+## T030 approval and main replay — 2026-10-07
+
+- Fresh independent review APPROVED the full `9e07c1c..545907b` slice, with
+  no blocking or non-blocking findings. Reviewer final exact gate:
+  `403 passed in 15.66s`, zero skips; Ruff lint/format passed.
+- Main replayed the final `proof.py` unchanged in a separate checkout pinned to
+  `545907b9ebfd5e18d21d095eb674437b1cb78d95`. Replay covered official action refs
+  and definitions, actual push/PR PASS at both implementation and reviewed SHAs,
+  required-check query, live effective main rules, preserved original rules,
+  setup chronology, installed source identity and the exact local gate:
+  `403 passed in 18.29s`, zero skips; `79 files already formatted`,
+  `All checks passed!`, locked sync exit 0.
+- Reviewer and main both changed project version `0.1.0` → `0.1.1` only in their
+  isolated checkouts while retaining the committed lockfile. Real
+  `uv sync --locked` rejected it with the intended lockfile-staleness diagnostic,
+  without a network/dependency failure. Restored locked sync passed. Both
+  checkouts' 122 tracked files byte-match the reviewed SHA and have clean status.
+- Final proof SHA-256:
+  `966d1522aeaed09043b22096fbb196ff4552122fad6a8aa73e5cbd9886ea3d42`.
+  Replay command: `python3 build/t030-reviewer-evidence/proof.py --checkout
+  /tmp/assertion-engine-t030-main --output build/t030-main-replay --before-ruleset
+  build/t030-main-evidence/ruleset-before.json`. Checkout must be isolated and
+  pinned to the reviewed SHA; GitHub calls are read-only. Full logs, commands,
+  snapshots and byte manifests: `build/t030-reviewer-evidence/` and
+  `build/t030-main-replay/`. The scripts are ignored local evidence; committed
+  commands/run URLs allow an independent reconstruction.
+- Reviewed-SHA hosted [PR run](https://github.com/lukeking/assertion-engine/actions/runs/37639431078)
+  and [push run](https://github.com/lukeking/assertion-engine/actions/runs/37639416030)
+  both passed. `gh pr checks 5 --required` reports both `change-gate` executions
+  SUCCESS; `gh pr view 5` still reports OPEN/draft and MERGEABLE/CLEAN.
+  T030 promotes to `[X]` only in this post-approval commit. T031–T036 and
+  full M0 acceptance remain pending; PR #5 remains draft.
