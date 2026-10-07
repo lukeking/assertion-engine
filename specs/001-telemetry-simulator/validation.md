@@ -250,5 +250,50 @@ Tasks are promoted in a separate post-approval commit.
   - actions/checkout v7.0.1: `3d3c42e5aac5ba805825da76410c181273ba90b1`.
   - astral-sh/setup-uv v10.2.0: `c18668ad3cf93ea998bef934396af7bb5c839dc7`.
 - T030 still must implement workflow, obtain actual PASS/check names, then configure
-  required checks and read effective rules back. T028/T032 negative fixtures/mutations
-  and T033 clean-checkout/CI verification remain open.
+  required checks and read effective rules back. T032 isolated gate mutations and
+  T033 clean-checkout/CI verification remain open; T028 approval is recorded below.
+
+## Permanent gate rejection fixtures — T028 reviewed and main-verified
+
+- Complete reviewed slice: `ef2fee0a40aca6d084a54e985b62f2db54948189` to
+  `a5abdefa5992fecf848d7e497c34fded2c952eea`. Five committed fixtures and six tests;
+  no product behavior changes. Each document fixture changes exactly one T003 field:
+  snapshot 0 adds `phase`, snapshot 0 removes `battery_percent`, snapshot 2 changes
+  sequence `2` to `3`, or ground-truth source seed changes `42` to `43`.
+  Specific validator diagnostics identify FR-004/006/010/011 and SC-002 violations;
+  repairing the intended field restores equality with the entire T003 document.
+- The independent canonical T003 telemetry literal is 1293 bytes. Reviewer confirmed
+  byte equality with standard-library JSON encoding for these integer/tenth values;
+  neither generator nor production serializer defines the expected bytes.
+  `noncanonical.telemetry.json` is exactly that literal plus one LF (1294 bytes),
+  with unchanged JSON semantics. The test-level byte gate rejects it; positive
+  controls check actual `canonical_bytes` output for decoded and typed telemetry.
+  Document validation still accepts human-formatted input, as before.
+- Executor baseline: `102 passed in 0.42s`; test-first isolated valid stand-ins:
+  `5 failed, 103 passed in 0.31s`, exit 1, all five failures `DID NOT RAISE`;
+  final contract suite: `108 passed in 0.29s`, exit 0, zero skips.
+  Logs, single-defect diffs and the disposable-copy RED replay are preserved under
+  `build/t028-executor-evidence/`. No temporary source mutation touched the main tree.
+- Fresh independent review APPROVED without findings. The first reviewer dispatch
+  stopped at a usage limit before producing evidence; resumed review used an isolated
+  checkout pinned to the same SHA. BEFORE and RESTORED contract suites each passed
+  108 tests, zero skips/errors, exit 0. Removing the sequence guard, removing source
+  identity rejection, and making the serializer append a second LF each produce
+  exactly `1 failed, 5 passed`, exit 1, at the intended unchanged new test assertion.
+  Source imports and offline schema contents resolve into the selected checkout.
+- Main replayed the unchanged reviewer proof in its separate pinned checkout with
+  the same 108/108 passing contract suites and three intended mutation failures.
+  After each restoration, all 121 tracked files byte-match the reviewed SHA;
+  reviewer and main checkouts are clean. Proof SHA-256:
+  `c58b28fa838eb34b3587ae97f4470e705ba2483e9720cd0e86033fbecca53009`.
+  Replay: `python3 build/t028-reviewer-evidence/proof.py <isolated-checkout>
+  <explicit-evidence-directory>` after installing that checkout's locked environment.
+  Findings, patches, raw logs/XML and results: `build/t028-reviewer-evidence/`;
+  main replay: `build/t028-main-evidence/reviewer-replay/`.
+- Main whole-repository verification at the unchanged implementation SHA:
+  `403 passed in 16.13s`, zero skips, exit 0; Ruff `All checks passed!`, format
+  `79 files already formatted`. Commands/logs/results are in
+  `build/t028-main-evidence/verification.json` and corresponding stdout/stderr files.
+  Fresh `uv sync --locked --offline` succeeded for both resumed isolated checkouts.
+  T028 promotes to `[X]` only in this separate post-approval commit. T030 is next;
+  workflow enforcement, whole-gate mutation proof and full M0 acceptance remain pending.
