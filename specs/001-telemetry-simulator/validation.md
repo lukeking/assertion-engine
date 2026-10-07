@@ -378,3 +378,61 @@ Tasks are promoted in a separate post-approval commit.
   SUCCESS; `gh pr view 5` still reports OPEN/draft and MERGEABLE/CLEAN.
   T030 promotes to `[X]` only in this post-approval commit. T031–T036 and
   full M0 acceptance remain pending; PR #5 remains draft.
+
+## T031 — README reviewed and main-verified — 2026-10-07
+
+- Implementation commit: `72eea6a13e3957e4942b44f2e0d8bb324d6354fb`.
+  Fresh independent review APPROVED the full
+  `fec98f0c777034acdd8db1acf4a48146f66e275f..72eea6a13e3957e4942b44f2e0d8bb324d6354fb`
+  slice (`README.md` and the T031 marker), without findings. README covers all
+  package/scenario/test responsibilities, M0 scope, environment and installed CLI
+  examples, canonical artifacts and the provisional E2/E3 latency ladder.
+- Documentation has no unit runner: verification is explicitly degraded, with no
+  behavioral TDD RED. The README command typo below verifies the documentation
+  smoke check; it does not fulfill T032's product-source whole-gate mutations.
+- Reviewer and main ran the same standalone `proof.py` unchanged in separate
+  disposable checkouts pinned to the implementation SHA. Both setup commands
+  ran individually and passed: CPython 3.14.4, uv 0.11.9 and locked sync. Installed
+  modules resolve into the supplied checkout, and both console entrypoints match
+  `pyproject.toml`. The proof rejects a preexisting generation destination rather
+  than deleting content. Writable uv/Matplotlib caches and temporary test files
+  use explicit local scratch paths; no shared storage is involved.
+- The README's four gate commands exactly match `.github/workflows/ci.yml`.
+  Reviewer: `403 passed in 24.87s`, zero skips; main replay: `403 passed in 21.62s`,
+  zero skips. Both report `79 files already formatted` and `All checks passed!`;
+  locked sync exits 0. All six README links, including the research anchor, resolve;
+  all four ladder rows and their arithmetic match the research authority.
+- Each isolated checkout temporarily changed the README command `generate` to
+  `generat-typo`. The unchanged expected-success smoke check rejected the extracted
+  command with exit 2 and `invalid choice: 'generat-typo'`; no generation directory
+  was created. The exact committed README bytes were restored before executing
+  the valid examples. All 122 tracked files byte-match the reviewed SHA before
+  and after each run, and final Git status is clean.
+- Extracted generation and Agg headless playback commands exit 0 at the exact
+  README destination, `build/artifacts/readme-normal-run`. The pair has 451
+  six-field snapshots spanning 0–45 s, telemetry `1.0.0`, ground truth `2.0.0`,
+  matching scenario sources and phase sequence boundaries `0, 100, 150, 250, 350`.
+  Playback preserves both input hashes:
+  telemetry `1cc55ccd8ba9fa11d2c242704ad5503d0e82635bb22c1c2c654cbcffe540494b`;
+  ground truth `b12d092c618dc03f06e63984cfba3a10d9c3d712535dca747784422c38e6fac7`.
+  Both produce a valid 1440 × 960 terminal PNG. Reviewer inspected the rendered
+  image: landing at 45 s, snapshot 450, completed state, origin and synchronized
+  plots. The GUI invocation was checked with appended `--help`; this slice does
+  not claim a new interactive GUI walkthrough.
+- Final proof SHA-256:
+  `050f952328968c62103dbe98cf16280eb2519ef2be365665e08491a57f728428`.
+  Replay command: `python3 build/t031-reviewer-evidence/proof.py --checkout
+  /tmp/assertion-engine-t031-main --output build/t031-main-replay`.
+  Use a new output directory and a disposable checkout at the reviewed SHA.
+  Full command/exit/stdout/stderr evidence, source identity, byte manifests and
+  mutation results are in `build/t031-reviewer-evidence/run-host/` and
+  `build/t031-main-replay/`; the proof and logs are ignored local evidence.
+- Initial sandbox setup attempts could not write uv's managed Python directory.
+  The reviewer and main final proofs passed with host access for the exact setup
+  command. The preliminary main check also caught a shell block whose successful
+  sync had masked the earlier install failure; setup was rerun command by command.
+  These environment failures are retained in local evidence and are not counted
+  as a contract rejection or TDD RED.
+- T031 promotes to `[X]` only in this separate post-approval commit. T032–T036,
+  whole-gate failure acceptance and full M0 acceptance remain pending; PR #5 stays
+  draft.
