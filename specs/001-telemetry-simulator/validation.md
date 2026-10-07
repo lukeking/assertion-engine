@@ -297,3 +297,51 @@ Tasks are promoted in a separate post-approval commit.
   Fresh `uv sync --locked --offline` succeeded for both resumed isolated checkouts.
   T028 promotes to `[X]` only in this separate post-approval commit. T030 is next;
   workflow enforcement, whole-gate mutation proof and full M0 acceptance remain pending.
+
+## T030 — locked CI and effective main checks — 2026-10-07
+
+- Implementation commit: `73d5c6becef85d62d352b73c860527b51eaedc14`.
+  `.github/workflows/ci.yml` runs on every `push` and `pull_request` using
+  `ubuntu-latest`, Python `3.14`, uv `0.11.9` and read-only repository contents.
+  The exact gate is `uv sync --locked`, `uv run ruff format --check .`,
+  `uv run ruff check .`, then `MPLBACKEND=Agg uv run pytest`.
+- Official GitHub tag refs independently verified by executor and main:
+  [checkout v7.0.1](https://github.com/actions/checkout/releases/tag/v7.0.1)
+  → `3d3c42e5aac5ba805825da76410c181273ba90b1`;
+  [setup-uv v10.2.0](https://github.com/astral-sh/setup-uv/releases/tag/v10.2.0)
+  → `c18668ad3cf93ea998bef934396af7bb5c839dc7`.
+  Both refs resolve directly to commits, and both action definitions use Node 24.
+  The pinned setup-uv definition supports `version` and `python-version`;
+  Python selection sets `UV_PYTHON`, and uv installs that interpreter as needed.
+  [uv 0.11.9](https://github.com/astral-sh/uv/releases/tag/0.11.9) is verified.
+- Real remote PASS at the implementation commit:
+  [pull_request run](https://github.com/lukeking/assertion-engine/actions/runs/37638599576)
+  and [push run](https://github.com/lukeking/assertion-engine/actions/runs/37638598182)
+  both conclude `success`; the actual check context is `change-gate`.
+  PR job `112851270734` passed all four gate steps. Its log reports
+  `403 passed in 9.57s`, `All checks passed!`, and `79 files already formatted`.
+- Main ruleset `20876648` was updated only after that observed PASS. Read-back
+  through `gh api repos/lukeking/assertion-engine/rules/branches/main` confirms
+  an active `required_status_checks` rule requiring `change-gate` from the
+  observed GitHub Actions app `15368`, with
+  `strict_required_status_checks_policy: true` and `do_not_enforce_on_create: false`.
+  Full ruleset read-back preserves the original deletion/non-fast-forward/PR
+  rules, `refs/heads/main` scope and empty bypass list exactly. Missing or failed
+  required checks are prohibited by this effective rule; a deliberate blocked-merge
+  experiment has not been run in T030. T032/T033 retain the isolated whole-gate
+  failure and final acceptance checks. Draft PR state alone is not gating evidence.
+- Local executor exact gate: `403 passed in 22.16s`, zero skips; main independent
+  exact gate: `403 passed in 17.16s`, zero skips. Both Ruff runs report
+  `All checks passed!`, both formatting runs `79 files already formatted`, and
+  both locked syncs exit 0. This YAML setup layer has no workflow unit runner:
+  verification is explicitly degraded (upstream definition/ref validation, local
+  gate and actual hosted Actions execution), with no fabricated behavioral RED.
+- Re-run upstream probes: `gh api repos/actions/checkout/git/ref/tags/v7.0.1`,
+  `gh api repos/astral-sh/setup-uv/git/ref/tags/v10.2.0`,
+  `gh api repos/astral-sh/uv/releases/tags/0.11.9`. Re-read remote evidence with
+  `gh run view 37638599576 --json status,conclusion,jobs,url` and
+  `gh api repos/lukeking/assertion-engine/commits/73d5c6becef85d62d352b73c860527b51eaedc14/check-runs`.
+  Reviewable before/after ruleset and effective-rule snapshots, exact update
+  payload, checks, run responses and logs: `build/t030-main-evidence/`;
+  executor action definitions and command summaries: `build/t030-executor-evidence/`.
+  T030 remains `[-]` pending independent review and main replay.
