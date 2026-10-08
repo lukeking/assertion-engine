@@ -436,3 +436,239 @@ Tasks are promoted in a separate post-approval commit.
 - T031 promotes to `[X]` only in this separate post-approval commit. T032–T036,
   whole-gate failure acceptance and full M0 acceptance remain pending; PR #5 stays
   draft.
+
+## T032 — isolated product-source gate failures — 2026-10-08
+
+- Executor source baseline: `b6a7ca914ea404db45ab597c17a6d321ba4c3bd2`.
+  Two new scratch clones, `/tmp/assertion-engine-t032-executor-complete-phase`
+  and `/tmp/assertion-engine-t032-executor-complete-bytes`, are detached at that
+  SHA and each installs its own `.venv`. CPython `3.14.4`, uv `0.11.9`.
+  Before, during and after each mutation, assertions check the installed
+  `assertion_engine`, artifacts, telemetry, simulator config/scenario/CLI module
+  `__file__` paths against that clone's `src/`, the interpreter prefix against
+  that clone's `.venv`, and its offline schema registry. No main-workspace source,
+  schema, fixture, test expectation or workflow is changed.
+- This is an evidence exercise against existing behavioral tests, with meaningful
+  mutation RED. It introduces no tests and makes no new-test TDD claim. Every row
+  below runs the exact T030 gate: `uv sync --locked`,
+  `uv run ruff format --check .`, `uv run ruff check .`, then
+  `MPLBACKEND=Agg uv run pytest`. The first three commands always exit 0 and report
+  `79 files already formatted` / `All checks passed!`; only the mutated pytest
+  commands exit 1. Every run has zero skips and no collection/import errors.
+
+| Clone / source state | pytest summary | Gate command exit codes, in order |
+| --- | --- | --- |
+| phase / baseline | `403 passed in 17.01s` | `0, 0, 0, 0` |
+| phase / mutated | `8 failed, 395 passed in 13.97s` | `0, 0, 0, 1` |
+| phase / restored | `403 passed in 15.56s` | `0, 0, 0, 0` |
+| bytes / baseline | `403 passed in 17.43s` | `0, 0, 0, 0` |
+| bytes / mutated | `23 failed, 380 passed in 10.33s` | `0, 0, 0, 1` |
+| bytes / restored | `403 passed in 15.75s` | `0, 0, 0, 0` |
+
+- Phase mutation: `_document` adds `"phase": "takeoff"` only while converting a
+  `TelemetrySnapshot` dataclass. The probe observes 451 seven-field snapshots;
+  unchanged shape validation raises
+  `snapshots.0: Additional properties are not allowed ('phase' was unexpected)`.
+  This violates FR-004's six fields and FR-010's separate ground truth, and
+  exercises FR-017/FR-018, SC-002 and SC-006. The primary unchanged failures are
+  `tests/contract/test_gate_rejection.py::test_FR011_FR018_SC006_canonical_positive_controls`
+  (typed telemetry differs from its independent six-field byte literal) and
+  `tests/integration/test_generate_normal_flight.py::test_SC001_three_runs_publish_complete_identical_pairs`
+  (CLI expected success receives the specific shape diagnostic before publishing).
+  The other six failures are in `tests/integration/test_generate_failures.py`:
+  `test_cli_operational_failures_clean_only_invocation_staging` for `mkdir`,
+  `staging`, `telemetry.json`, `ground-truth.json`, and `publish`, plus
+  `test_cli_created_parents_remain_after_staging_failure`. These are downstream
+  failures because the phase rejection occurs before their intended filesystem
+  stage; they are not six additional independent contract violations.
+- Byte mutation: a module-level `_canonical_calls` counter increments once per
+  `canonical_bytes` call and inserts that many spaces **before** the single final
+  LF. Three calls for `{"z": [2, 1], "a": "中文"}` produce one/two/three spaces and
+  different bytes, with identical decoded JSON and exactly one LF each. The
+  unchanged literal three-call assertion
+  `tests/contract/test_canonical_serialization.py::test_FR011_sorted_compact_utf8_single_lf_repeated`
+  fails on the expected byte mismatch, both within the full gate and directly:
+  `1 failed in 0.07s`, exit 1. This establishes FR-011, FR-018 and SC-006 rejection
+  without changing JSON semantics or introducing a second LF.
+- All 23 byte-mutation failures are accounted for: 13 in
+  `tests/contract/test_canonical_serialization.py` (the three-call test, ten
+  `test_FR011_calculated_quantization` cases,
+  `test_FR011_source_inputs_preserved_derived_values_quantized`, and
+  `test_FR011_typed_pair_source_has_identical_canonical_bytes`), the canonical
+  positive control above, eight in `tests/integration/test_playback_read_only.py`
+  (`test_module_cli_renders_terminal_frame_without_window`,
+  `test_complete_control_sequence_never_changes_input_hashes`, three
+  `test_render_failure_returns_one_preserves_inputs_and_cleans_staging` cases
+  for `OSError`/`ValueError`/`RuntimeError`, `test_gui_normal_close_returns_zero`,
+  `test_headless_selects_agg_before_view_and_invalid_output_name_rejects`, and
+  `test_installed_script_entrypoint`), and
+  `tests/unit/playback/test_loader.py::test_load_immutable_fixture_pair`.
+  The contract failures compare against fixed canonical bytes. The nine loader /
+  playback failures report `input bytes are not canonical JSON` because the
+  mutated serializer no longer reproduces the existing canonical input bytes.
+- SC-001 limitation measured explicitly: running its three-CLI-process test with
+  the byte mutation still gives `1 passed in 1.03s`, exit 0. Each new process resets
+  the counter, serializing telemetry with one space and truth with two. All three
+  telemetry hashes are
+  `f02793554bb469cc165114c0720c0d237a510745ae21fe5b25fa4723af5a7499`;
+  all three truth hashes are
+  `cbc72fbc742d912cdaa0b2b6425a4d393e651d21c555963873e3e2c7b2208525`.
+  SC-001 alone does not detect this within-process mutation. Its fixed-literal
+  FR-011 companion provides the required three-call rejection; the gate is RED
+  for that reason. No stronger SC-001 mutation coverage is claimed.
+- Both clones restore the saved exact source bytes. Before and after each full
+  exercise, every one of the 122 tracked files byte-matches its `git show SHA:path`
+  content and `git status --porcelain` is empty. The shared explicit uv dependency
+  cache is `/home/luke/.cache/uv`; `.venv` and source identities remain separate.
+  Matplotlib config and pytest temporary files use each clone's explicit
+  `build/t032-cache/` paths. No shared database or output storage is used.
+- Frozen rerunnable proof SHA-256:
+  `ccc7ae28a37a58fb7365e4ed3b47428b5c92edc82b80f0568df14f07d054d794`.
+  Final command/exit/stdout/stderr records, every failed pytest node ID, probes,
+  exact patches and tracked byte manifests are in
+  `build/t032-executor-evidence/run-complete/results.json` and adjacent files.
+  Replay the unchanged ignored proof with
+  `python3 build/t032-executor-evidence/proof.py --repo "$PWD" --sha <reviewed-SHA>
+  --output build/t032-review-replay --scratch-prefix /tmp/t032-review-replay
+  --uv-cache /home/luke/.cache/uv
+  --python /home/luke/.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/bin/python3.14`.
+  Select new output/clone names: the proof refuses preexisting destinations.
+  Its SHA argument binds every clone, installed-origin assertion and byte manifest
+  to the supplied commit, so later documentation/marker commits can be reviewed.
+- Preliminary attempts remain under `run-executor`, `run-host` and `run-final`.
+  The first sync failed with sandbox DNS resolution; a slow cold-cache host sync
+  was interrupted before any mutation. A Ruff stdin preflight corrected mutation
+  formatting before application. An initial valid phase RED stopped at a proof
+  parser that expected pytest's optional failure-reason suffix; it restored the
+  clone and was superseded by the complete replay above. Environment/preflight
+  issues are not counted as contract RED, and incomplete runs are not final PASS.
+- Independent review and main replay are still pending at this executor record.
+  T033 required-check/whole-gate acceptance and full M0 acceptance remain pending.
+
+### Self-contained T032 reproduction without ignored evidence files
+
+Run from a checkout containing the chosen source commit with uv `0.11.9` and an
+available CPython `3.14` interpreter. Use a new `/tmp` prefix below; both suffixed
+clone paths must be absent. Optional `UV_CACHE_DIR` and `UV_PYTHON` select an
+explicit writable cache and interpreter. Otherwise caches are created inside
+each clone and uv selects Python from the committed `.python-version`; cold
+caches require normal dependency-download access. The snippet prints raw runner
+output, checks expected exits and primary failure identities, restores only its
+own mutation, and verifies all tracked bytes and clean status. Replace the SHA
+argument with the reviewed documentation/marker commit when replaying that slice.
+
+```sh
+python3 - "$PWD" b6a7ca914ea404db45ab597c17a6d321ba4c3bd2 /tmp/t032-reproduction-new <<'PY'
+import importlib
+import os
+from pathlib import Path
+import subprocess
+import sys
+
+repo, sha, prefix = Path(sys.argv[1]).resolve(), sys.argv[2], Path(sys.argv[3])
+clones = [Path(str(prefix) + "-" + kind) for kind in ("phase", "bytes")]
+assert all(p.resolve().is_relative_to(Path("/tmp")) and not os.path.lexists(p) for p in clones)
+source_path = "src/assertion_engine/artifacts.py"
+phase_old = '''    if is_dataclass(value) and not isinstance(value, type):
+        return {
+            field.name: _document(getattr(value, field.name)) for field in fields(value)
+        }
+'''
+phase_new = '''    if is_dataclass(value) and not isinstance(value, type):
+        document = {
+            field.name: _document(getattr(value, field.name)) for field in fields(value)
+        }
+        if isinstance(value, TelemetrySnapshot):
+            document["phase"] = "takeoff"
+        return document
+'''
+counter_old = 'DERIVED_CONFIG_FIELDS = {"sample_rate_hz", "sample_interval_s"}\n'
+counter_new = counter_old + "_canonical_calls = 0\n"
+byte_old = '''    try:
+        return (_encode(_document(value)) + "\\n").encode("utf-8")
+'''
+byte_new = '''    global _canonical_calls
+    _canonical_calls += 1
+    try:
+        return (_encode(_document(value)) + " " * _canonical_calls + "\\n").encode(
+            "utf-8"
+        )
+'''
+fr011 = "tests/contract/test_canonical_serialization.py::test_FR011_sorted_compact_utf8_single_lf_repeated"
+phase_target = "tests/contract/test_gate_rejection.py::test_FR011_FR018_SC006_canonical_positive_controls"
+sc001 = "tests/integration/test_generate_normal_flight.py::test_SC001_three_runs_publish_complete_identical_pairs"
+identity = '''import importlib, sys
+from pathlib import Path
+root = Path.cwd().resolve()
+for name in ("assertion_engine", "assertion_engine.artifacts", "assertion_engine.telemetry",
+             "assertion_engine.simulator.config", "assertion_engine.simulator.scenario", "assertion_engine.simulator.cli"):
+    path = root / "src" / (name.replace(".", "/") + ".py")
+    if name == "assertion_engine":
+        path = root / "src/assertion_engine/__init__.py"
+    origin = Path(importlib.import_module(name).__file__).resolve()
+    assert origin == path, (name, origin, path)
+    print(name, origin)
+assert Path(sys.prefix).resolve() == root / ".venv"
+assert sys.version_info[:2] == (3, 14)
+'''
+commands = [["uv", "sync", "--locked"], ["uv", "run", "ruff", "format", "--check", "."],
+            ["uv", "run", "ruff", "check", "."], ["uv", "run", "pytest"]]
+
+def run(command, expected=0):
+    result = subprocess.run(command, cwd=clone, env=env, capture_output=True, text=True)
+    print("COMMAND", command, "EXIT", result.returncode, flush=True)
+    print(result.stdout, end="", flush=True)
+    print(result.stderr, end="", file=sys.stderr, flush=True)
+    assert result.returncode == expected, (command, result.returncode)
+    return result.stdout
+
+def unchanged():
+    assert subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=clone, text=True).strip() == sha
+    for name in subprocess.check_output(["git", "ls-files", "-z"], cwd=clone).split(b"\0"):
+        if name:
+            path = name.decode()
+            assert (clone / path).read_bytes() == subprocess.check_output(["git", "show", sha + ":" + path], cwd=clone), path
+    assert subprocess.check_output(["git", "status", "--porcelain"], cwd=clone) == b""
+
+def gate(mutated=False):
+    for index, command in enumerate(commands):
+        if index == 3:
+            env["MPLBACKEND"] = "Agg"
+        output = run(command, 1 if mutated and index == 3 else 0)
+        if index == 0:
+            run(["uv", "run", "python", "-c", identity])
+    if mutated:
+        assert "FAILED " + (phase_target if kind == "phase" else fr011) in output
+
+for kind, clone in zip(("phase", "bytes"), clones):
+    subprocess.run(["git", "clone", "--no-hardlinks", "--no-checkout", "--", str(repo), str(clone)], check=True)
+    subprocess.run(["git", "checkout", "--detach", sha], cwd=clone, check=True)
+    env = dict(os.environ)
+    for variable in ("PYTHONPATH", "PYTEST_ADDOPTS", "VIRTUAL_ENV", "UV_PROJECT_ENVIRONMENT"):
+        env.pop(variable, None)
+    for variable, suffix in (("UV_CACHE_DIR", "uv"), ("MPLCONFIGDIR", "matplotlib"), ("TMPDIR", "tmp")):
+        directory = clone / "build/t032-cache" / suffix
+        directory.mkdir(parents=True)
+        env[variable] = os.environ[variable] if variable == "UV_CACHE_DIR" and variable in os.environ else str(directory)
+    unchanged()
+    gate()
+    path = clone / source_path
+    original = path.read_bytes()
+    text = original.decode()
+    replacements = [(phase_old, phase_new)] if kind == "phase" else [(counter_old, counter_new), (byte_old, byte_new)]
+    for old, new in replacements:
+        assert text.count(old) == 1
+        text = text.replace(old, new, 1)
+    try:
+        path.write_text(text)
+        gate(mutated=True)
+        if kind == "bytes":
+            assert "At index 0 diff" in run(["uv", "run", "pytest", fr011], 1)
+            run(["uv", "run", "pytest", "-s", sc001])
+    finally:
+        path.write_bytes(original)
+        unchanged()
+    gate()
+    unchanged()
+PY
+```
