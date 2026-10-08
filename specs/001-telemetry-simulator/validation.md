@@ -1341,3 +1341,56 @@ at a later head; historical URLs/SHA do not prove its current hosted state.
 
 T035 awaits independent review and main replay. This concordance does not mark
 T036, CP6 or M0 complete and does not resolve handoff Open Questions.
+
+
+## T035 approval and main replay — 2026-10-09
+
+- Fresh independent review APPROVED the full
+  `f33e76ef782013dece8b77bb906c4378fef9bd38..f19532306c1f7c83092b4522fd1249bf51cfc890`
+  slice without blocking or nonblocking findings. The diff contains only the
+  T035 evidence section and its awaiting-review marker. Reviewer exact baseline
+  gate: `403 passed in 22.13s`; restored final gate: `403 passed in 21.75s`.
+  Exact cited representative nodes: `31 passed in 7.06s`. Locked sync exits 0;
+  Ruff reports `79 files already formatted` and `All checks passed!`.
+- Main captured and replayed the executed reviewer proof byte-for-byte in the
+  new `/tmp/assertion-engine-t035-main-reviewer-replay` checkout at reviewed SHA.
+  Its SHA-256 equals the frozen `final-proof.py`:
+  `76c9b3d92d890f13cf8a7c92c6050f717d8f2f4ab109913ab0e144e2582c54f8`.
+  Main exact baseline: `403 passed in 21.34s`; restored final exact gate:
+  `403 passed in 21.95s`; representatives: `31 passed in 6.70s`.
+  Both full gates have zero failures, errors or skips; sync and Ruff pass.
+- Main independently reads all 27 raw command/exit/environment/log records.
+  The audit confirms 24 distinct FR/SC rows, 31 exact cited nodes, all five
+  module citations and the T035/constitution/research ladder agreement. The
+  exact committed rate snippet generates eight real JSON artifacts: rates
+  10/20/50/100 Hz, counts 451/901/2251/4501, paired versions 1.0.0/2.0.0,
+  exact source/sequence boundaries and terminal time 45 s/battery 91%.
+  Historical CP4 source and T032 product/test/schema/workflow/lock comparisons
+  are empty diffs against their actual SHAs. Neither proof refreshes native
+  GUI or remote-policy evidence, nor measures future Evaluator latency.
+- Reviewer and main mutate only isolated `scenario.py` to quantize phase starts
+  before ceil. The existing A1 assertion catches `[0, 1, 3, 6, 9]` instead of
+  `[0, 2, 3, 6, 9]`: each reports `1 failed in 0.16s`, followed by
+  `1 passed in 0.14s` after saved-byte restoration. Both audits also reject
+  L1 count `901 -> 999` and a nonexistent FR-001 test reference with the intended
+  AssertionErrors; the restored document audit passes. These are instrument
+  checks against existing tests/documentation, not new test-first TDD claims.
+- Main separately verifies all three retained reviewer checkouts and its own
+  replay: each has 122 tracked files byte-identical to reviewed SHA and empty
+  Git status. The reviewer retains its initial nonexistent `simulator.writer`
+  identity-probe failure in `run-1/`; it is a scratch instrumentation failure,
+  excluded from product RED. Root product source/tests/schemas/scenario/
+  workflow/package/lock files remain unchanged. Reviewer and main also actually
+  reopen the historical five phase PNGs; this is reinspection of saved pixels.
+- Frozen proof/report/replay instructions and raw review records are under
+  `build/t035-reviewer-evidence/`. Main raw replay is under
+  `build/t035-main-evidence/reviewer-replay/`; independent record, artifact,
+  diagnostic and four-checkout inspection is `final-inspection.json` in its
+  parent directory. Replay the frozen script unchanged with the six arguments
+  documented above, the reviewed SHA, new output/scratch names and no validation
+  overlay. The committed standalone procedure remains sufficient without
+  ignored evidence files.
+- T035 promotes to `[X]` only in this separate post-approval commit. T036, CP6
+  and full M0 acceptance remain pending; PR `#5` stays draft. Luke requires all
+  remaining handoff Open Questions and their failure to be surfaced during SDD
+  to be reviewed together at spec001 closeout; this slice does not resolve them.
