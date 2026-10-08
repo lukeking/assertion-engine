@@ -876,3 +876,56 @@ gh run view 37779244011 --repo lukeking/assertion-engine \
 
 T033 awaits independent review and main replay. T034–T036 and full M0 acceptance
 remain pending; this record does not mark the feature ready to merge.
+
+## T033 approval and main replay — 2026-10-08
+
+- Fresh independent review APPROVED the full
+  `1f3ba71fffee02f030902c21dbe7685c34b11d38..ccb466a060551edcb88ad231ee9b257bd9881463`
+  slice without blocking or non-blocking findings. The reviewed diff contains
+  only the appended validation evidence and T033's awaiting-review marker.
+  Reviewer exact gate: `403 passed in 18.77s`; permanent fixture/scanner controls:
+  `81 passed in 0.75s`. Both have zero failures, errors or skips; locked sync and
+  Ruff format/lint pass. Installed CLI smoke reproduces the two recorded hashes,
+  validates the 451-snapshot pair and PNG, and preserves input bytes.
+- Main replayed the reviewer's frozen `final-proof.py` unchanged at reviewed SHA
+  `ccb466a060551edcb88ad231ee9b257bd9881463`, in the newly installed checkout
+  `/tmp/assertion-engine-t033-main-reviewer-final`. Main exact gate:
+  `403 passed in 17.10s`; permanent controls: `81 passed in 0.77s`, zero failures,
+  errors or skips. Sync/format/lint and both CLI commands exit 0; source/schema
+  identities, canonical pair assertions and unchanged input hashes hold.
+- Reviewer and main independently exercise a new alternating-LF byte mutation
+  only in their respective scratch checkouts: the three calls yield one, two,
+  then one trailing LF while decoding to the same JSON. The unchanged FR-011
+  fixed-literal three-call assertion fails at index 1, with
+  `1 failed in 0.07s` / `1 failed in 0.06s`, respectively. Mutation format/lint
+  pass. Restoring saved exact source bytes makes the direct test pass again:
+  `1 passed in 0.05s` for both. This is independent review mutation evidence,
+  not a new-test TDD claim or a stronger SC-001 claim.
+- Both proofs reconcile the historical T032 raw outputs, command records,
+  identities, probes and byte manifests, and confirm unchanged gate-related
+  content. They also independently read live effective main rules/full ruleset
+  and reviewed-head required checks. Reviewed-SHA
+  [PR job](https://github.com/lukeking/assertion-engine/actions/runs/37789007813/job/113351071054)
+  and [push job](https://github.com/lukeking/assertion-engine/actions/runs/37789000820/job/113351046357)
+  both succeed with all four gate steps, context `change-gate` and app `15368`.
+  Active ruleset `20876648` retains strict required checks, exact main scope and
+  no bypass. The reported test-merge SHA has no checks or commit statuses.
+  The effective-policy/no-attempted-merge verification boundary above is unchanged.
+- Main separately inspects the raw runner summaries, command metadata and intended
+  `At index 1 diff` diagnostic, then checks every tracked byte in the pinned review
+  checkout, reviewer proof checkout and main proof checkout against the reviewed
+  SHA: all three cover 122 files and have empty Git status. Main's read-only
+  inspection is `build/t033-main-evidence/final-inspection.json`; replay outputs
+  are under `build/t033-main-evidence/run-reviewer-final-proof/`. Reviewer findings,
+  raw proof and executor-record inspection are under `build/t033-reviewer-evidence/`.
+- Frozen reviewer proof SHA-256:
+  `18d8df4f87326f298f8e3f3a2daac9425970578d48ee1d61c9e2c61c629e7a25`.
+  Replay uses the same CLI arguments as the local proof above with this reviewer
+  script and reviewed SHA, plus new output/scratch destinations. The full review
+  proof additionally binds live PR head to the reviewed SHA; main ran it before
+  pushing the completion marker. After the head advances, use the standalone
+  current-head gate/CLI/policy procedure above for fresh acceptance rather than
+  treating historical checks as evidence for the new head.
+- T033 promotes to `[X]` only in this separate post-approval commit. CP5 acceptance
+  is complete at the documented evidence boundaries. T034–T036 and full M0
+  acceptance remain pending; PR `#5` stays draft.
