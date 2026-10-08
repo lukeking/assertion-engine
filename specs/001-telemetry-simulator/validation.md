@@ -711,3 +711,168 @@ PY
 - T032 promotes to `[X]` only in this separate post-approval commit.
   T033–T036, whole-gate/required-check acceptance and full M0 acceptance remain
   pending. PR `#5` stays draft.
+
+## T033 — clean gate and effective required-check acceptance — 2026-10-08
+
+- Source baseline: `1f3ba71fffee02f030902c21dbe7685c34b11d38`.
+  Executor cloned it into the new detached checkout
+  `/tmp/assertion-engine-t033-executor-run1`, with its own installed `.venv`.
+  CPython `3.14.4`, uv `0.11.9`. Before and after verification, all 122 tracked
+  files byte-match `git show <SHA>:<path>` and Git status is empty. Installed
+  package, artifact, telemetry, Simulator and playback module origins resolve
+  into this checkout's `src/`; interpreter prefix is its `.venv`. The three
+  offline validators' schemas match this checkout's committed schema files,
+  and installed console entrypoints match `pyproject.toml`.
+- The four commands below exactly match `.github/workflows/ci.yml`; each exits 0.
+  The full runner reports zero failures, errors or skips. Pytest temporary files
+  and Matplotlib configuration use explicit checkout-local cache directories;
+  dependencies use the explicitly selected `/home/luke/.cache/uv` cache.
+
+| Exact CI/local entrypoint | Executor raw result |
+| --- | --- |
+| `uv sync --locked` | exit `0` |
+| `uv run ruff format --check .` | `79 files already formatted` |
+| `uv run ruff check .` | `All checks passed!` |
+| `MPLBACKEND=Agg uv run pytest` | `403 passed in 18.52s` |
+
+- Installed `uv run assertion-sim generate --scenario scenarios/normal-flight.toml
+  --output build/artifacts/t033-normal-run` and `MPLBACKEND=Agg uv run
+  assertion-playback --telemetry build/artifacts/t033-normal-run/telemetry.json
+  --ground-truth build/artifacts/t033-normal-run/ground-truth.json
+  --headless-output build/artifacts/t033-normal-run/terminal.png` both exit 0.
+  Generation publishes exactly the two JSON files into a previously absent
+  explicit destination, and its stdout paths/hashes match those files. Assertions
+  verify telemetry `1.0.0`, ground truth `2.0.0`, matching source, canonical bytes,
+  451 snapshots with exactly the six contract fields, contiguous indices 0–450,
+  increasing mission time 0–45 s, five ordered phases with sequence boundaries
+  `0, 100, 150, 250, 350`, terminal origin/zero velocity/91% battery, and a valid
+  fully decodable 1440 × 960 PNG. Playback preserves both input hashes:
+  telemetry `1cc55ccd8ba9fa11d2c242704ad5503d0e82635bb22c1c2c654cbcffe540494b`;
+  ground truth `b12d092c618dc03f06e63984cfba3a10d9c3d712535dca747784422c38e6fac7`.
+  This is CLI/headless acceptance; it adds no interactive or SC-005 visual claim.
+- Permanent T028 negatives and T027/T029 scanner controls pass independently with
+  `MPLBACKEND=Agg uv run pytest -v tests/contract/test_gate_rejection.py
+  tests/architecture/test_dependency_boundaries.py`: `81 passed in 0.75s`,
+  zero failures, errors or skips. These are six fixed-literal contract controls,
+  24 forbidden-import cases, 24 allowed-import cases, one multi-target/location
+  case, 15 reserved-package executable-content cases, nine empty-placeholder
+  controls and two production scans. Direct calls to the existing validator and
+  scanner also confirm the specific diagnostics below and no production boundary
+  or reserved-package violations. The noncanonical fixture still has valid paired
+  semantics; the independent literal byte assertion rejects its extra LF.
+
+| Permanent fixture | Observed rejection / requirement |
+| --- | --- |
+| `extra-phase.telemetry.json` | `snapshots.0: Additional properties are not allowed ('phase' was unexpected)`; FR-004/FR-010, SC-002 |
+| `missing-field.telemetry.json` | `snapshots.0: 'battery_percent' is a required property`; FR-004, SC-002 |
+| `wrong-sequence.telemetry.json` | `snapshots[2].sequence_number is not contiguous`; FR-006, SC-002 |
+| `mismatched-source.ground-truth.json` | `artifact pair scenario source differs`; FR-011 |
+| `noncanonical.telemetry.json` | `FR-011/FR-018 SC-006: noncanonical bytes`; independent byte control |
+
+- Existing T032 evidence was audited, without repeating its six gates per run.
+  Frozen `build/t032-reviewer-evidence/final-proof.py` retains SHA-256
+  `ccc7ae28a37a58fb7365e4ed3b47428b5c92edc82b80f0568df14f07d054d794`.
+  Reviewer `run-review/results.json` and main
+  `run-reviewer-final-proof/results.json` agree with their raw stdout/stderr:
+  every baseline/restored gate is `403 passed`, each mutated gate has first-three
+  exits `0, 0, 0` and pytest exit `1`; phase mutation yields `8 failed, 395 passed`,
+  byte mutation `23 failed, 380 passed`. Failure node IDs, group counts, phase
+  shape diagnostic and the literal three-call byte mismatch match the T032 record.
+  Semantic probes, installed origins and all 122-file before/restored/final byte
+  manifests were checked against their historical reviewed SHA `9d787530...`.
+  Source, tests, scenarios, workflow, package/lock files and schemas are unchanged
+  between that SHA and this baseline, making the approved mutation evidence
+  applicable to this clean gate. T032's self-contained reproduction above remains
+  the procedure for freshly exercising both mutations without ignored artifacts.
+- The measured counter-reset limitation remains: under T032's byte mutation,
+  direct within-process FR-011 is RED, while direct SC-001's three fresh CLI
+  processes are GREEN with identical three-run hashes. T033 does not claim
+  SC-001 detected that mutation. Together, the clean gate, permanent controls
+  and audited isolated contract/byte failures support FR-016–FR-018 and SC-006.
+  This evidence/documentation slice adds no tests or product code and makes no
+  new-test TDD RED claim.
+- Main's live GitHub reads completed between `2026-10-08T13:48:26Z` and
+  `13:49:46Z` (21:48:26–21:49:46 +0800). Executor independently reconciled their
+  raw responses and JSON snapshots. PR #5's latest head is the baseline SHA above;
+  actual [pull_request check](https://github.com/lukeking/assertion-engine/actions/runs/37779250537/job/113317867905)
+  and [push check](https://github.com/lukeking/assertion-engine/actions/runs/37779244011/job/113317841615)
+  both have context `change-gate`, source GitHub Actions app `15368`, completed
+  status and `success` conclusion. `gh pr checks 5 --required` reports both
+  `change-gate` executions SUCCESS. Both hosted run/job snapshots also show all
+  four exact gate steps successful at that same head SHA.
+- Live `repos/lukeking/assertion-engine/rules/branches/main` read-back includes
+  effective required checks from ruleset `20876648`: context `change-gate`,
+  `integration_id: 15368`, `strict_required_status_checks_policy: true`,
+  `do_not_enforce_on_create: false`. Full ruleset read-back is active, includes
+  only `refs/heads/main`, excludes no refs, has an empty bypass list, and retains
+  deletion/non-fast-forward/pull-request rules. These names and source IDs match
+  the actual required PR checks. The head has no competing legacy commit-status
+  entries.
+- Missing/failed merge blocking is verified at the effective-policy boundary:
+  GitHub's [required-check ruleset semantics](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/available-rules-for-rulesets)
+  require the specified check and source before merging, and
+  [required-check troubleshooting](https://docs.github.com/en/pull-requests/how-tos/merge-and-close-pull-requests/troubleshooting-required-status-checks)
+  distinguishes a missing/pending or failed required check from accepted
+  success/skipped/neutral conclusions on the latest SHA. Strict mode also requires
+  an up-to-date branch. Applying those documented semantics to the read-back
+  policy establishes the missing/failed restriction; no blocked-merge request or
+  disposable remote PR experiment was performed. This hosted policy has no local
+  server test runner, so verification is explicitly degraded to live policy,
+  actual checks and official semantics. `MERGEABLE / CLEAN` and draft state are
+  not used as evidence for that restriction; PR #5 remains open/draft.
+- Local command/exit/raw-output records, hashes and manifests:
+  `build/t033-executor-evidence/run-executor/`; GitHub raw read-backs:
+  `build/t033-main-evidence/github/`; their independent reconciliation:
+  `build/t033-executor-evidence/github-audit.json`. The standalone local proof's
+  SHA-256 is `e27c43b425c1f33209189ceaaf1a3b140fb98f17e9a41074426c4157334ce40b`.
+  Replay unchanged with new destinations (historical T032 artifacts must remain
+  under the supplied repository's `build/`):
+
+```sh
+python3 build/t033-executor-evidence/proof.py --repo "$PWD" \
+  --sha 1f3ba71fffee02f030902c21dbe7685c34b11d38 \
+  --output build/t033-review-replay \
+  --scratch /tmp/assertion-engine-t033-review-replay \
+  --uv-cache /home/luke/.cache/uv \
+  --python /home/luke/.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/bin/python3.14
+python3 build/t033-executor-evidence/github-audit.py \
+  --snapshots build/t033-main-evidence/github \
+  --output build/t033-review-github-audit.json
+```
+
+For an independent local rerun when ignored proofs are unavailable, create a new
+detached checkout at the source SHA above, select uv `0.11.9` and CPython `3.14`,
+and set explicit writable `UV_CACHE_DIR`, `MPLCONFIGDIR` and `TMPDIR` destinations.
+Unset inherited `PYTHONPATH`, `PYTEST_ADDOPTS`, `VIRTUAL_ENV` and
+`UV_PROJECT_ENVIRONMENT`. Check every tracked file against `git show SHA:path`
+and empty status before/after; after locked sync assert installed module origins
+and `.venv` prefix belong to that checkout, and `_validators()` schema documents
+equal its three committed schemas. Run the four exact table commands, the focused
+controls command and the two exact CLI commands above; use a new absent generation
+directory and an existing explicit PNG parent. Hash both inputs before/after
+playback, validate their pair, and check six fields/451 snapshots, source/versions,
+terminal state and full PNG decoding as specified above. The committed assertions
+in the unchanged focused tests supply the literal fixture and scanner oracles.
+
+Re-read GitHub policy/checks with these read-only commands; obtain `HEAD_SHA` from
+the live PR response and substitute the current hosted run IDs before reviewing
+a later head. Confirm all four job steps, check source/name/head and full ruleset
+scope/enforcement/bypass conditions again; prior snapshots do not prove a later
+head's checks:
+
+```sh
+gh api repos/lukeking/assertion-engine/rules/branches/main
+gh api repos/lukeking/assertion-engine/rulesets/20876648
+gh api repos/lukeking/assertion-engine/pulls/5
+gh pr checks 5 --repo lukeking/assertion-engine --required \
+  --json name,state,bucket,event,link,workflow
+gh api repos/lukeking/assertion-engine/commits/HEAD_SHA/check-runs
+gh api repos/lukeking/assertion-engine/commits/HEAD_SHA/status
+gh run view 37779250537 --repo lukeking/assertion-engine \
+  --json headSha,event,status,conclusion,jobs,url
+gh run view 37779244011 --repo lukeking/assertion-engine \
+  --json headSha,event,status,conclusion,jobs,url
+```
+
+T033 awaits independent review and main replay. T034–T036 and full M0 acceptance
+remain pending; this record does not mark the feature ready to merge.
