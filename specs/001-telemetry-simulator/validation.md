@@ -1107,3 +1107,237 @@ remain pending; this record does not mark the feature ready to merge.
   ignored evidence is absent.
 - T034 promotes to `[X]` only in this separate post-approval commit. T035–T036,
   CP6 and full M0 acceptance remain pending; PR `#5` stays draft.
+
+## T035 — requirement and algorithm concordance — 2026-10-09
+
+This section consolidates FR-001–FR-018 and SC-001–SC-006. The current local
+source baseline is `f33e76ef782013dece8b77bb906c4378fef9bd38`; T035 changes
+only this evidence document. It adds no product behavior or tests and claims
+no new-test TDD RED. T036 and whole-feature closeout remain pending.
+
+The executor's fresh detached checkout is
+`/tmp/assertion-engine-t035-executor-before`, with its own `.venv`. Installed
+package, all ten inspected module origins, both console entrypoints and all
+three offline schema documents resolve to that checkout. Its 122 tracked
+files byte-match the baseline before/after the gate, and Git status is empty.
+Environment: Linux x86_64, WSL2 kernel `6.6.87.2`, glibc `2.39`, CPython
+`3.14.4`, uv `0.11.9`, Matplotlib `3.11.2`, jsonschema `4.26.0`, pytest `9.1.1`,
+Ruff `0.16.10`, package `0.1.0`. Telemetry/config/source/scenario versions are
+`1.0.0`; ground truth is `2.0.0`, with required sequence ownership boundaries.
+Dependency versions remain locked in `uv.lock`.
+
+Dependencies and managed Python were copied from the prior explicit T034
+scratch environment into the new evidence directory. Writable uv/Python-bin,
+Matplotlib configuration and temporary paths are explicit there; `UV_OFFLINE=1`
+and `PYTHONDONTWRITEBYTECODE=1`. Inherited Python/pytest/project-environment
+overrides, including `UV_NO_SYNC`, are removed. Tests write only to pytest's
+`tmp_path`; rate artifacts use new explicit evidence destinations. No e2e suite
+or typechecker is configured. The gate commands are unchanged:
+
+| Exact CI/local entrypoint | Fresh baseline | Final evidence replay |
+| --- | --- | --- |
+| `uv sync --locked` | exit `0` | exit `0` |
+| `uv run ruff format --check .` | `79 files already formatted`; exit `0` | `79 files already formatted`; exit `0` |
+| `uv run ruff check .` | `All checks passed!`; exit `0` | `All checks passed!`; exit `0` |
+| `MPLBACKEND=Agg uv run pytest` | `403 passed in 23.52s`; exit `0` | `403 passed in 22.32s`; exit `0` |
+
+Both runners have zero failures/errors/skips. Final replay uses the new pinned
+`/tmp/assertion-engine-t035-executor-final` checkout with the same versions and
+installed-source/schema checks; all 122 tracked files remain byte-identical and
+its Git status is empty. Intermediate replay also passed `403 passed in 21.82s`.
+Before/current/final raw evidence is retained in
+`build/t035-executor-evidence/{before,current,final}/`; final `commands.json`
+captures each command's own environment snapshot. Preliminary driver Ruff
+checks caught import/long-string style issues, and inspection found that a shared
+metadata dictionary retroactively added the Agg flag to earlier command records.
+Both scratch-driver issues were repaired before the final replay; neither was a
+product behavior failure or TDD RED. Final explicit driver Ruff checks pass.
+
+The following exact node IDs were checked against pytest collection and their
+assertions were read, including literal state/byte tables, rejected inputs,
+artist data and immutable-input checks. A row identifies representative tests;
+the entire 403-test gate ran. Visual and remote-policy claims additionally need
+the historical evidence linked in their rows; a passing test name alone does
+not provide those forms of acceptance.
+
+| Requirement | Exact current test node ID(s) | Assertion / complementary evidence |
+| --- | --- | --- |
+| FR-001 | `tests/unit/simulator/test_config.py::test_FR001_baseline_normalization_and_exact_rate`; `tests/integration/test_generate_failures.py::test_cli_invalid_config_has_no_parent_side_effects[hover_duration_s = 5.0-hover_duration_s = 5.0000004-terminal]` | Explicit seed/source and exact rate; even a terminal time that rounds to 45 s is rejected with exit 2 before parent/final creation. The full config suite also checks required fields, types, ranges and representable metadata. |
+| FR-002 | `tests/unit/simulator/test_scenario.py::test_FR002_baseline_literal_states_and_half_open_boundaries` | Literal states before/at each boundary and terminal origin/zero velocity; exactly five ordered ground-truth phases. |
+| FR-003 | `tests/integration/test_generate_normal_flight.py::test_T013_checked_in_baseline_matches_literal_source`; `tests/unit/simulator/test_scenario.py::test_FR003_four_supported_rates[0.2-10-0.1-451-boundaries0]` | Checked-in 2 m/s and 0.2 m inputs yield 10 Hz. All four parameter IDs, generated artifacts and constitution/research concordance are recorded below. |
+| FR-004 | `tests/contract/test_artifact_schemas.py::test_FR004_literal_pair_and_immutable_types`; `tests/integration/test_generate_normal_flight.py::test_SC001_three_runs_publish_complete_identical_pairs` | Immutable six-field types; the installed CLI's 451 snapshots each equal a complete independent six-field state oracle. |
+| FR-005 | `tests/contract/test_artifact_schemas.py::test_FR017_reject_artifact_violations[FR005-single-vehicle]`; `tests/integration/test_generate_normal_flight.py::test_SC001_three_runs_publish_complete_identical_pairs` | Rejects a different snapshot vehicle; every baseline snapshot has the literal source vehicle ID. |
+| FR-006 | `tests/unit/simulator/test_scenario.py::test_FR006_three_hz_all_literal_snapshots`; `tests/contract/test_artifact_schemas.py::test_FR006_rounded_interval_accumulation_rejected` | Exact index/grid starts at zero, includes the aligned terminal tick, remains strictly increasing; 3 Hz literal times reject accumulation of rounded interval metadata. FR-001's CLI rejection covers no-directory effects. |
+| FR-007 | `tests/unit/simulator/test_scenario.py::test_FR002_baseline_literal_states_and_half_open_boundaries`; `tests/contract/test_artifact_schemas.py::test_FR017_reject_artifact_violations[FR007-east]` | Literal local NED path has negative down above origin, positive/negative north motion and terminal origin; incorrect east motion is rejected. |
+| FR-008 | `tests/unit/playback/test_view_model.py::test_display_only_derivations_and_original_mission_time`; `tests/contract/test_artifact_schemas.py::test_FR004_literal_pair_and_immutable_types` | Stored vector `(2,3,6)` gives display speed 7; six fields contain no stored scalar-speed duplicate. |
+| FR-009 | `tests/unit/simulator/test_scenario.py::test_FR002_baseline_literal_states_and_half_open_boundaries`; `tests/contract/test_artifact_schemas.py::test_FR001_shared_source_prevalidation[FR009-exhausted]` | Literal linear battery values, 100% to 91%; source prevalidation rejects exhausted normal missions. Full config/shape tests cover valid zero drain and the 0–100 range. |
+| FR-010 | `tests/unit/simulator/test_scenario.py::test_FR010_A1_sequence_boundaries_precede_time_quantization`; `tests/unit/playback/test_view_model.py::test_same_boundary_empty_phase_and_terminal_multiple_starts` | Independent truth preserves exact ceil boundaries; A1 tick 1 stays takeoff despite equal displayed times. Equal starts give empty phases; terminal belongs to landing. Six-field checks prevent phase leakage. |
+| FR-011 | `tests/contract/test_canonical_serialization.py::test_FR011_sorted_compact_utf8_single_lf_repeated`; `tests/integration/test_generate_normal_flight.py::test_SC001_three_runs_publish_complete_identical_pairs` | Fixed UTF-8 sorted/compact/single-LF bytes over three in-process calls; three installed CLI processes produce identical pairs and source metadata. Source precision tests prevent input rounding. [T034 three-run hashes](#t034--repeatable-quickstart-acceptance--2026-10-09) are historical. |
+| FR-012 | `tests/integration/test_generate_normal_flight.py::test_SC001_three_runs_publish_complete_identical_pairs`; `tests/architecture/test_dependency_boundaries.py::test_FR016_production_future_packages_are_empty` | Complete upstream state estimates contain exactly six allowed fields; no raw sensor/fusion/noise/fidelity assertion or future Evaluator behavior. This is M0 scope/shape evidence, not physical-fidelity measurement. |
+| FR-013 | `tests/unit/playback/test_loader.py::test_load_immutable_fixture_pair`; `tests/unit/playback/test_view_model.py::test_FR013_SC004_three_hz_repeated_ticks_use_saved_event_gaps` | Fixture-only loader preserves hashes and immutable input; session returns the same saved snapshot object, using actual saved time gaps. Playback dependency scan forbids simulator imports. |
+| FR-014 | `tests/unit/playback/test_matplotlib_view.py::test_drawn_route_series_annotations_and_synchronized_cursor`; `tests/unit/playback/test_matplotlib_view.py::test_registered_widget_callbacks_and_timer_advance_events` | Exact route/series/phase annotations/cursors plus registered Play/Pause/Step/Restart/speed callbacks. [CP4 native controls](#cp4-acceptance--t025t026-reviewed-and-main-verified) and [T034 replay](#t034-approval-and-main-replay--2026-10-09) provide historical automated native GUI evidence. |
+| FR-015 | `tests/integration/test_playback_read_only.py::test_complete_control_sequence_never_changes_input_hashes`; `tests/unit/playback/test_view_model.py::test_controls_preserve_partial_cadence_and_terminal` | Controls retain original mission times, input hashes and artifact identities, while cursor/rate change. Historical CP4 generated-pair traversal checks all 451 saved snapshots. |
+| FR-016 | `tests/architecture/test_dependency_boundaries.py::test_FR016_production_dependency_boundaries`; `tests/architecture/test_dependency_boundaries.py::test_FR016_production_future_packages_are_empty` | AST production scans enforce Fuzzer/DSL/Evaluator and playback/simulator isolation; literal positive/negative scanner controls guard the instrument; all three future packages contain only placeholders. |
+| FR-017 | `tests/contract/test_gate_rejection.py::test_FR004_FR010_SC002_extra_phase_rejected`; `tests/architecture/test_dependency_boundaries.py::test_FR016_production_dependency_boundaries` | Current full CI/local gate covers contract/scenario/reproducibility/truth/playback/boundaries. [T033 policy acceptance](#t033-approval-and-main-replay--2026-10-08) records actual `change-gate` checks and effective main rules; no fresh remote-policy claim is made here. |
+| FR-018 | `tests/contract/test_gate_rejection.py::test_FR011_FR018_SC006_noncanonical_bytes_rejected`; `tests/contract/test_gate_rejection.py::test_FR004_FR010_SC002_extra_phase_rejected` | Fixed single-defect negatives reject byte and phase violations. [T032 isolated unchanged-gate failures](#t032-approval-and-main-replay--2026-10-08) supply historical behavioral mutation RED; current clean gate is green. |
+| SC-001 | `tests/integration/test_generate_normal_flight.py::test_SC001_three_runs_publish_complete_identical_pairs` | Three fresh installed CLI processes compare complete bytes, stdout hashes and file hashes for both artifacts. [T034 actual three-run hashes](#t034--repeatable-quickstart-acceptance--2026-10-09) agree. T032's within-process counter mutation is detected by FR-011's fixed-literal test, not by this process-reset test. |
+| SC-002 | `tests/integration/test_generate_normal_flight.py::test_SC001_three_runs_publish_complete_identical_pairs`; `tests/contract/test_gate_rejection.py::test_FR004_FR010_SC002_extra_phase_rejected` | Every baseline snapshot equals the six-field literal oracle, contiguous indices 0–450 and strictly increasing grid times; no phase label. Permanent extra-phase rejection has the specific diagnostic. |
+| SC-003 | `tests/unit/simulator/test_scenario.py::test_FR002_baseline_literal_states_and_half_open_boundaries`; `tests/unit/simulator/test_scenario.py::test_FR003_four_supported_rates[0.2-10-0.1-451-boundaries0]` | 451 snapshots at 10 Hz, five phases, origin → north 20 m → origin, 45 s terminal zero velocity and 91% battery. |
+| SC-004 | `tests/unit/playback/test_view_model.py::test_FR013_SC004_three_hz_repeated_ticks_use_saved_event_gaps`; `tests/integration/test_playback_read_only.py::test_complete_control_sequence_never_changes_input_hashes` | Cursor uses original event identities/times throughout controls and completion. [CP4 generated-pair control/traversal record](#cp4-acceptance--t025t026-reviewed-and-main-verified) additionally checks all 451 baseline snapshots. |
+| SC-005 | `tests/unit/playback/test_matplotlib_view.py::test_drawn_route_series_annotations_and_synchronized_cursor`; `tests/unit/playback/test_matplotlib_view.py::test_A1_display_collision_uses_sequence_phase_for_label_and_marker` | Artist assertions supplement actual five-image visual inspection below. [CP4 visual/native acceptance](#cp4-acceptance--t025t026-reviewed-and-main-verified) and [T034 terminal reinspection](#t034-approval-and-main-replay--2026-10-09) are historical; native controls were automated, not human manual acceptance. |
+| SC-006 | `tests/contract/test_gate_rejection.py::test_FR011_FR018_SC006_canonical_positive_controls`; `tests/contract/test_canonical_serialization.py::test_FR011_sorted_compact_utf8_single_lf_repeated` | Current clean full gate PASS plus [T032 phase/byte mutations](#t032-approval-and-main-replay--2026-10-08) at reviewed SHA and [T033 permanent-controls/policy acceptance](#t033-approval-and-main-replay--2026-10-08). Existing T032 self-contained procedure reproduces both historical REDs. |
+
+Historical evidence boundaries are explicit: CP4 rendered/native evidence has
+product SHA `0d856dcf062db97041fc5b0393f51ed6f55b369d` and reviewed SHA
+`ffc5e6ae5dff66127cc6602db05f716cbfaa94b3` (2026-10-06). On 2026-10-09 the
+executor reopened all five original 1440 × 960 phase PNGs at
+`build/artifacts/m0-playback-acceptance-20261005/`: labels read takeoff/5 s,
+hover/12.5 s, northbound/20 s, return/30 s and landing/40 s. The five bands
+are ordered/readable; three time cursors align; northbound and return markers
+are at north 10 m, with altitude 10 m; takeoff/landing show altitude 5 m.
+This is a present reinspection of historical rendered pixels, with their paths
+and SHA-256 recorded in `build/t035-executor-evidence/visual-reinspection.json`.
+It adds no new GUI execution. Current `src/` bytes equal that historical product
+SHA. T034's separate automated native replay is reviewed at
+`6b24846f81e13328025b7648e229fb72d553066e` (2026-10-09).
+
+T032 whole-gate RED is pinned to reviewed SHA
+`9d7875305b5a277ced11e0df5b58d2351c14cf01` (2026-10-08): phase mutation
+`8 failed, 395 passed`; byte mutation `23 failed, 380 passed`; all restored
+gates report `403 passed`. Current source/tests/schemas/scenario/workflow/
+package/lock bytes equal that SHA. T033 remote check/policy evidence is pinned
+to `ccb466a060551edcb88ad231ee9b257bd9881463` (2026-10-08), not current head:
+actual hosted `change-gate` successes, Actions app `15368`, active main ruleset
+`20876648`, strict mode and no bypass. Missing/failed restriction was verified
+at the effective-policy boundary with official semantics; no attempted blocked
+merge was performed. T035 does not refresh GitHub or elevate that boundary.
+
+Algorithm/source concordance was checked against complete module code,
+docstrings, the referenced documentation sections and the tests above. The
+links below are the primary sources already cited in the algorithm document;
+the project's model choices are identified separately from their mathematical
+or API basis. Constitution IV's source + chapter + plain-language + data mapping
+is present for all five required modules:
+
+| Task / module citation | Source and chapter | Plain-language bridge and actual data/code mapping |
+| --- | --- | --- |
+| T007 `src/assertion_engine/artifacts.py` → §1 | CPython 3.14 [`Fraction` constructor/rounding](https://github.com/python/cpython/blob/3.14/Doc/library/fractions.rst), [`Decimal.quantize` / ROUND_HALF_EVEN](https://docs.python.org/3.14/library/decimal.html#decimal.Decimal.quantize), [`json` parsing/encoding](https://docs.python.org/3.14/library/json.html) | Measure every tick from zero rather than carry rounded error. `exact_number`/`source_timeline` derive Fraction rate, interval, starts and integer terminal count from non-derived source; `validate_pair` checks `Q(k × interval)` and `ceil(start × rate)`. `quantize` implements Q with `round(Fraction × 1_000_000)` and a Decimal result, rather than calling Decimal.quantize. Serializer explicitly supplies sorted keys, compact encoding, finite numbers, unchanged source precision and one LF. |
+| T012 `src/assertion_engine/simulator/config.py` → §1 | Same §1 numeric sources; source-to-grid/ceil mapping is project E2 arithmetic | TOML decimal tokens remain Decimal; `ScenarioConfiguration` prevalidates via `source_timeline` before I/O, then `to_source` quantizes only derived rate/interval metadata. The exact source ruler remains authoritative. Config and CLI tests reject rounded-looking terminal alignment with no parent creation. |
+| T014 `src/assertion_engine/simulator/scenario.py` → §1–§2 | §1 numeric sources; OpenStax [University Physics Volume 1 §3.4, equation 3.13](https://openstax.org/books/university-physics-volume-1/pages/3-4-motion-with-constant-acceleration) with acceleration zero | Ask each tick's location directly within a fixed-velocity segment: `p_start + v × elapsed`. Code uses `time = k × interval` and exact starts, then quantizes NED motion/battery into snapshots; truth saves `ceil(start × rate)`. Five-phase order/half-open ownership and the linear battery model are accepted FR-002/009/010 choices, not physical-fidelity claims from the textbook. |
+| T022 `src/assertion_engine/playback/view_model.py` → §3 | OpenStax [University Physics Volume 1 §4.1, Velocity Vector / Example 4.3](https://openstax.org/books/university-physics-volume-1/pages/4-1-displacement-and-velocity-vectors) | Speed is the saved vector's magnitude (`math.hypot`); altitude is saved `-down`. Cursor indexes immutable snapshots; last eligible ground-truth sequence boundary selects phase. Rational viewing-clock progress consumes saved event-time gaps; pause/step/speed/restart never regenerate source motion or mission times. |
+| T023 `src/assertion_engine/playback/matplotlib_view.py` → §4 | Matplotlib [Animations / FuncAnimation explanation](https://matplotlib.org/stable/users/explain/animations/animations.html#funcanimation), [widgets Button/Slider API](https://matplotlib.org/stable/api/widgets_api.html) | Album/page-turning bridge: the wall clock changes when the saved cursor advances. Actual code uses `figure.canvas.new_timer(interval=25)` and updates artists in its callback; it does not instantiate FuncAnimation. The animation source supplies artist-update intuition; Button/Slider are the actual widget APIs. Marker, three cursors and label all read one session snapshot; rounded truth times only place annotations. Agg and GUI share this view/session. |
+
+Constitution II (v1.0.1), research's provisional ladder, source rate formula and
+the four literal generation tests agree. With cruise speed 2 m/s,
+`spacing = 2/rate`; with mission duration 45 s, snapshots are `45 × rate + 1`.
+`event interval = 1/rate` yields the values below. The corpus count 10 is the
+future minimum rule corpus from constitution III; M0 implements no rules or
+Evaluator. The installed CLI also generated four new pairs under
+`build/t035-executor-evidence/final/rates/<rate>/artifacts/`.
+
+| Tier | Rate | Spacing | Snapshot count | Interval / future max budget | Future rules / evidence |
+| --- | ---: | ---: | ---: | ---: | --- |
+| L0 | 10 Hz | 0.20 m | 451 | 0.1 s / 100 ms | 10; E2 arithmetic |
+| L1 | 20 Hz | 0.10 m | 901 | 0.05 s / 50 ms | 10; E2 arithmetic + E3 tier choice |
+| L2 | 50 Hz | 0.04 m | 2251 | 0.02 s / 20 ms | 10; E2 arithmetic + E3 tier choice |
+| L3 | 100 Hz | 0.02 m | 4501 | 0.01 s / 10 ms | 10; E2 arithmetic + E3 tier choice |
+
+Exact test IDs for these four rows are
+`tests/unit/simulator/test_scenario.py::test_FR003_four_supported_rates[0.2-10-0.1-451-boundaries0]`,
+`tests/unit/simulator/test_scenario.py::test_FR003_four_supported_rates[0.1-20-0.05-901-boundaries1]`,
+`tests/unit/simulator/test_scenario.py::test_FR003_four_supported_rates[0.04-50-0.02-2251-boundaries2]`,
+and `tests/unit/simulator/test_scenario.py::test_FR003_four_supported_rates[0.02-100-0.01-4501-boundaries3]`.
+They assert literal counts/boundaries, complete sequence continuity, increasing
+times and terminal origin/zero velocity/91% battery. Generator input capability
+is measured E1. The intervals/budgets are E2 arithmetic, with E3 future tier
+selection; they remain **not an Evaluator latency E1 or performance Gate**.
+Future Evaluator acceptance requires p50/p95/p99/max, GC pause distribution,
+input age/detection latency and reproducibility provenance, as research states.
+
+Standalone ignored replay captures command/cwd/explicit environment/exit/raw
+stdout/stderr, installed identities, all 24 collected-node rows, five module
+citations, both ladder tables, four generated pairs and 122-file byte manifests.
+It also checks this T035 ladder table against literal rates/counts/intervals/
+budgets and both authority tables. The committed four-rate snippet below was
+extracted from this document and executed successfully in the isolated checkout;
+`committed-reproduction.*` retains its actual CLI output and assertions.
+Frozen replay SHA-256:
+`e1d1f174676dc0c2c964d467833b8bf54241abfbbc187132a0dbc9cd1c213b5b`.
+It refuses existing output/clone paths. Run it with new destinations; `--validation`
+selects this working document before its commit, and may be omitted when the
+chosen SHA already includes the T035 section:
+
+```sh
+python3 build/t035-executor-evidence/proof.py --repo "$PWD" \
+  --sha f33e76ef782013dece8b77bb906c4378fef9bd38 \
+  --output build/t035-replay-new --scratch /tmp/assertion-engine-t035-replay-new \
+  --uv-cache-source /tmp/assertion-engine-t034-main-reviewer-final/build/reviewer-environment/uv \
+  --python /tmp/assertion-engine-t034-main-reviewer-final/build/reviewer-environment/python/cpython-3.14.4-linux-x86_64-gnu/bin/python3.14 \
+  --validation specs/001-telemetry-simulator/validation.md
+```
+
+When ignored scripts/caches are unavailable, the following committed procedure
+is sufficient: create a new detached local clone at the chosen SHA (containing
+this section, or copy this validation document into its matching path), select
+uv 0.11.9 and CPython 3.14, choose explicit writable `UV_CACHE_DIR`,
+`UV_PYTHON_INSTALL_DIR`, `UV_PYTHON_BIN_DIR`, `MPLCONFIGDIR` and `TMPDIR` beneath
+that clone's ignored `build/`, and remove inherited `PYTHONPATH`, `PYTHONHOME`,
+`PYTEST_ADDOPTS`, `PYTEST_PLUGINS`, `VIRTUAL_ENV`, `UV_PROJECT_ENVIRONMENT` and
+`UV_NO_SYNC`. Cold caches need normal dependency-download access; offline mode
+is appropriate only for an explicitly provisioned cache/interpreter. Run the
+four exact gate commands above individually and retain outputs/exits. Assert
+that installed module origins, `.venv` prefix, console entrypoints and offline
+schemas belong to that checkout. Before/after, compare tracked product bytes
+to `git show SHA:path`; allow only the stated validation overlay if needed.
+
+Run `MPLBACKEND=Agg uv run pytest --collect-only -q` and ensure each backticked
+node ID in the 24 requirement rows and four-rate list occurs literally in the
+collected output. Read each cited test's assertions. Read the five complete
+modules/docstrings and algorithm §§1–4, using the concordance table to check
+the source/chapter/bridge/data correspondence; compare the four constitution II
+and research ladder rows, their E2/E3 markings and future 10-rule corpus.
+Generate the four rate artifacts through the real installed CLI in this new
+checkout with the self-contained snippet below; it refuses existing outputs:
+
+```sh
+uv run python - <<'PY'
+from pathlib import Path
+import subprocess
+import json
+
+baseline = Path("scenarios/normal-flight.toml").read_text()
+assert baseline.count("observation_spacing_m = 0.2\n") == 1
+root = Path("build/t035-rates-new")
+assert not root.exists()
+root.mkdir(parents=True)
+for rate, spacing, count in [(10, "0.2", 451), (20, "0.1", 901),
+                             (50, "0.04", 2251), (100, "0.02", 4501)]:
+    scenario = root / f"{rate}.toml"
+    scenario.write_text(baseline.replace("observation_spacing_m = 0.2\n",
+                                         f"observation_spacing_m = {spacing}\n"))
+    target = root / str(rate)
+    subprocess.run(["assertion-sim", "generate", "--scenario", str(scenario),
+                    "--output", str(target)], check=True)
+    telemetry = json.loads((target / "telemetry.json").read_text())
+    truth = json.loads((target / "ground-truth.json").read_text())
+    config = telemetry["scenario"]["config"]
+    assert config["sample_rate_hz"] == rate
+    assert config["sample_interval_s"] == 1 / rate
+    assert len(telemetry["snapshots"]) == count
+    assert telemetry["snapshots"][-1]["mission_time_s"] == 45
+    assert [p["start_sequence_number"] for p in truth["phases"]] == [
+        n * rate for n in (0, 10, 15, 25, 35)]
+    print(rate, spacing, count, 1000 / rate, "ms; future rules=10; E2/E3")
+PY
+```
+
+Use the committed [quickstart](quickstart.md) for fresh three-run byte hashes
+and playback; use the [self-contained T032 procedure](#self-contained-t032-reproduction-without-ignored-evidence-files)
+for isolated whole-gate negatives. Visual inspection requires actually opening
+the five phase/terminal images as CP4 records; native controls require a real
+GUI backend/display and must state whether interaction was automated or human.
+The T033 read-only GitHub commands above reproduce remote policy/check evidence
+at a later head; historical URLs/SHA do not prove its current hosted state.
+
+T035 awaits independent review and main replay. This concordance does not mark
+T036, CP6 or M0 complete and does not resolve handoff Open Questions.
