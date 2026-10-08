@@ -672,3 +672,42 @@ for kind, clone in zip(("phase", "bytes"), clones):
     unchanged()
 PY
 ```
+
+
+## T032 approval and main replay — 2026-10-08
+
+- Fresh independent review APPROVED the complete
+  `b6a7ca914ea404db45ab597c17a6d321ba4c3bd2..9d7875305b5a277ced11e0df5b58d2351c14cf01`
+  slice (`validation.md` and the T032 awaiting-review marker), without findings.
+  Reviewer phase gate: `403 passed in 18.88s` →
+  `8 failed, 395 passed in 14.78s` → `403 passed in 16.10s`.
+  Reviewer byte gate: `403 passed in 18.26s` →
+  `23 failed, 380 passed in 10.50s` → `403 passed in 16.54s`.
+- Main replayed the reviewer's frozen `final-proof.py` unchanged at reviewed SHA
+  `9d7875305b5a277ced11e0df5b58d2351c14cf01`, using two fresh separately installed
+  clones at `/tmp/assertion-engine-t032-main-reviewer-final-{phase,bytes}`.
+  Phase gate: `403 passed in 18.21s` →
+  `8 failed, 395 passed in 15.57s` → `403 passed in 15.44s`.
+  Byte gate: `403 passed in 16.54s` →
+  `23 failed, 380 passed in 9.79s` → `403 passed in 15.27s`.
+  Each sync/format/lint exits 0; only mutated full-suite pytest exits 1.
+  All full gates have zero skips. The direct byte assertion reports
+  `1 failed in 0.08s`; direct SC-001 reports `1 passed in 0.99s` with the same
+  documented counter-reset limitation and three identical hash pairs.
+- Main also reran the independent read-only inspection: committed reproduction
+  code compiles, mutation constants/targets/gate commands match the frozen proof,
+  installed-source assertions hold, failure groups match raw logs, and all
+  122 tracked files in both restored clones and the pinned review checkout
+  byte-match the reviewed SHA with empty Git status. Main separately checked
+  the intended raw phase/byte diagnostics and Ruff summaries.
+- The final proof retains SHA-256
+  `ccc7ae28a37a58fb7365e4ed3b47428b5c92edc82b80f0568df14f07d054d794`.
+  Main command records, raw logs, probes, patches and manifests are under
+  `build/t032-main-evidence/run-reviewer-final-proof/`; independent inspection
+  is `build/t032-main-evidence/final-inspection.json`. Reviewer findings and
+  final proof are under `build/t032-reviewer-evidence/`.
+  Replay with the prior proof CLI, the reviewed SHA above, and new destinations;
+  the committed reproduction block remains sufficient without ignored files.
+- T032 promotes to `[X]` only in this separate post-approval commit.
+  T033–T036, whole-gate/required-check acceptance and full M0 acceptance remain
+  pending. PR `#5` stays draft.
