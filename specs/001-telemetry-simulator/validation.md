@@ -1055,3 +1055,55 @@ the scratch drivers supplement it with captured assertions and raw records.
 
 T034 awaits independent review and main replay. T035–T036 and full M0 acceptance
 remain pending; this record does not mark the feature ready to merge.
+
+## T034 approval and main replay — 2026-10-09
+
+- Fresh independent review APPROVED the complete
+  `d0201de56111f14307d7a337f13dfa9e5315a003..6b24846f81e13328025b7648e229fb72d553066e`
+  slice without blocking or non-blocking findings. It covers quickstart,
+  appended validation evidence and T034's awaiting-review marker only.
+  Reviewer exact gate: `403 passed in 21.07s`, zero failures/errors/skips;
+  locked sync exits 0, Ruff reports `79 files already formatted` and
+  `All checks passed!`.
+- Main replayed the reviewer's standalone frozen `final-proof.py` unchanged,
+  SHA-256 `bfe94005b769abe330b7ed1a0d7a7a44a4c57b87a814eb361c02e9069948fef9`,
+  at the reviewed SHA in `/tmp/assertion-engine-t034-main-reviewer-final`.
+  Main exact gate: `403 passed in 20.77s`, zero failures/errors/skips;
+  locked sync and both Ruff commands pass. All documented noninteractive
+  blocks, installed CLI stdout paths/hashes, exact six-path hash comparison,
+  valid terminal PNG and unchanged input hashes pass. Expected overwrite
+  exit 2, deliberately wrong expected-exit rejection, copied-file checksum
+  failure and separate stale-lock rejection/restoration all reproduce.
+- Reviewer and main independently mutate only scratch `PlaybackSession.step()`
+  to skip one saved event. Unchanged
+  `test_pause_settles_elapsed_time_and_step_is_exactly_one` fails at cursor
+  `3` versus required `2`, while mutation Ruff format/lint remain green.
+  Reviewer: `1 passed in 0.15s` → `1 failed in 0.18s` → `1 passed in 0.17s`;
+  main: `1 passed in 0.15s` → `1 failed in 0.17s` → `1 passed in 0.17s`.
+  These are assertion-bite checks, not new test-first TDD claims.
+- Both final proofs execute native Tk through actual installed `cli.main`,
+  original `show()`, Tk mainloop and product TimerTk: each records 13 control
+  checkpoints, 11 native release events, 44 real ticks and CLI exit 0.
+  Inputs/domain bytes remain equal. Main separately matches numeric requested
+  widget coordinates to all native release coordinates, confirms explicit
+  canvas initialization, and actually opens both fresh headless and native
+  canvas PNGs: terminal labels, origin, zero altitude/speed, 91% battery,
+  ordered five-phase bands and synchronized cursors are readable and correct.
+- Reviewer retained the initial timestamp-valid bytecode restoration failure
+  and sandbox TkAgg display failure. The final proof disables bytecode writes
+  before new clones and uses authorized host display access. Main preserves
+  that proof and environment unchanged. Main independently reads all 30 raw
+  command records, intended mutation diagnostic and runner summaries, then
+  byte-checks all seven retained reviewer checkouts plus both main checkouts:
+  each has 122 tracked files matching the reviewed SHA and empty Git status.
+  Root product source/tests/schemas/workflow are unchanged.
+- Reviewer report/replay/raw inspection are under `build/t034-reviewer-evidence/`;
+  main raw replay is `build/t034-main-evidence/run-reviewer-final-proof/`, and
+  separate raw/coordinate/byte inspection is `final-inspection.json` in its
+  parent directory. The local replay command above accepts the frozen reviewer
+  driver in place of the executor driver, the reviewed SHA, new destinations,
+  no `--guide` overlay and `--gui required`; `REPLAY.md` holds the exact command.
+  The committed quickstart and standalone procedure remain available when
+  ignored evidence is absent.
+- T034 promotes to `[X]` only in this separate post-approval commit. T035–T036,
+  CP6 and full M0 acceptance remain pending; PR `#5` stays draft.
