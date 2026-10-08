@@ -929,3 +929,129 @@ remain pending; this record does not mark the feature ready to merge.
 - T033 promotes to `[X]` only in this separate post-approval commit. CP5 acceptance
   is complete at the documented evidence boundaries. T034–T036 and full M0
   acceptance remain pending; PR `#5` stays draft.
+
+## T034 — repeatable quickstart acceptance — 2026-10-09
+
+- Product baseline: `d0201de56111f14307d7a337f13dfa9e5315a003`.
+  Executor used the new detached checkout
+  `/tmp/assertion-engine-t034-executor-run2`, CPython `3.14.4` and uv
+  `0.11.9`. Before/after the baseline gate, all 122 tracked files byte-match
+  that SHA and Git status is empty. Final verification permits only the updated
+  quickstart overlay; every other tracked file, including source/tests/schemas,
+  scenarios, package/lock files and workflow, still matches the baseline bytes.
+  Installed package, artifact and both CLI module origins resolve into the
+  disposable checkout's `src/`; interpreter prefix is its own `.venv`.
+  Installed console entrypoints match `pyproject.toml`, and the three offline
+  validator schemas match that checkout's committed schema files.
+- The updated walkthrough names exactly three absent destinations:
+  `build/artifacts/quickstart-normal-run-1`, `-2` and `-3`. The proof reads
+  and executes the final guide's shell blocks, including Python installation,
+  locked sync, generation, explicit six-file hash comparison, overwrite refusal,
+  headless playback and the final gate. The interactive block is covered
+  separately below. Executed guide SHA-256:
+  `89e37d48f764dbfa23afe14381b71212a3759009d40ccc91a22f9092a4f8a448`.
+- Sandbox setup failures remain visible: default `uv python find 3.14` exits
+  `2` because the default uv cache is read-only; the first disposable sync
+  exits `1` because sandbox DNS cannot refresh Hatchling metadata from PyPI.
+  Raw records are `build/t034-executor-evidence/00-environment-probe*` and
+  `run-executor/04-baseline-gate-1.*`. The successful run copies the existing
+  uv cache and managed Python installation into explicit checkout-local
+  `build/t034-cache/` directories, selects writable Matplotlib configuration,
+  Python-bin and temporary directories there, and sets `UV_OFFLINE=1`.
+  `UV_NO_SYNC` and inherited Python/pytest/project-environment overrides are
+  removed. These are dependency/environment failures, not contract negatives.
+  No documented gate command is changed.
+
+| Exact unchanged CI/local entrypoint | Clean baseline | Final documented gate |
+| --- | --- | --- |
+| `uv sync --locked` | exit `0` | exit `0` |
+| `uv run ruff format --check .` | `79 files already formatted` | `79 files already formatted` |
+| `uv run ruff check .` | `All checks passed!` | `All checks passed!` |
+| `MPLBACKEND=Agg uv run pytest` | `403 passed in 21.69s` | `403 passed in 18.64s` |
+
+- Both full pytest runs have zero failures, errors or skips. This documentation
+  and acceptance slice adds no product tests or code, uses no e2e suite, and
+  makes no test-first RED claim. No static typechecker is configured.
+- Each of the three installed generate commands exits `0` and initially
+  publishes exactly `telemetry.json` and `ground-truth.json`. Explicit
+  `sha256sum` output contains exactly those six paths; the three telemetry
+  files share `1cc55ccd8ba9fa11d2c242704ad5503d0e82635bb22c1c2c654cbcffe540494b`,
+  and the three ground-truth files share
+  `b12d092c618dc03f06e63984cfba3a10d9c3d712535dca747784422c38e6fac7`.
+  This directly establishes SC-001 for the unchanged normal scenario/config/seed.
+- Retrying run 1 returns exit `2` and `target already exists`; both JSON
+  hashes and the complete destination tree remain unchanged. The documented
+  exit check is the final conditional expression, so an unexpected exit cannot
+  be hidden by a later successful checksum command. Replaying that block with
+  an intentionally wrong expected exit `0` returns `1` without running the
+  checksum check. A copied telemetry file with one appended space makes
+  `sha256sum --check` return `1` and report telemetry `FAILED`, while copied
+  ground truth remains `OK`; primary inputs are retained. Changing only the
+  disposable `pyproject.toml` jsonschema upper bound from `<5` to `<6`
+  makes `uv sync --locked` return `1` with the stale-lock diagnostic; saved
+  exact bytes are restored before the final gate.
+- Installed Agg playback exits `0`, writes a fully decodable 1440 × 960 PNG
+  into run 1's existing parent, and preserves both JSON input hashes. Real
+  validators confirm canonical telemetry `1.0.0` / ground truth `2.0.0`,
+  matching source, 451 snapshots with exactly six fields, contiguous sequence
+  numbers 0–450, increasing mission time 0–45 s, five ordered phases with
+  sequence boundaries `0, 100, 150, 250, 350`, terminal origin/zero velocity
+  and 91% battery. Main independently opened the generated PNG and observed
+  the readable landing/45 s/snapshot 450/completed label, origin marker,
+  terminal zero altitude/speed, 91% battery, five phase bands and synchronized
+  terminal cursors.
+- Main separately runs the actual installed playback `cli.main`, original
+  `MatplotlibView.show()`, native Tk mainloop and product `TimerTk` on the
+  available host display using `TkAgg`. Evidence records 13 control
+  checkpoints, 11 native Tk widget release events, 42 real timer ticks and
+  CLI exit `0`. Automated native canvas events exercise Play, Pause,
+  one-snapshot Step, speed and Restart; observed mission times/cursors stay tied
+  to saved snapshots, and input/domain bytes remain equal. This is actual
+  native GUI execution with generated events, not human manual interaction.
+  Main opened its 1200 × 800 terminal canvas image and observed the same
+  terminal route/plots/phase/time checks. Sandbox Tk cannot reach the display,
+  so the native run uses host execution. The first GUI instrumentation attempt
+  failed before Play because the canvas was not primed; only scratch
+  instrumentation was corrected, and both attempts' raw logs are retained.
+- CLI/headless raw commands, exit codes, summaries, hash/tree records,
+  identities, negative controls and 122-file byte manifests are under
+  `build/t034-executor-evidence/run-executor-offline/`. Frozen scratch proof
+  SHA-256: `a57f4359ce00109872d620618ef30b39fed77ddb7add6caf197dab5dd82983a6`.
+  Native GUI controls/ticks/events/images and byte records are under
+  `build/t034-main-evidence/native-gui-retry-run/`; command/raw logs are
+  `native-gui-retry-command.json`, `native-gui-retry.stdout` and
+  `native-gui-retry.stderr` in their parent evidence directory.
+
+Replay the local proof with new output and scratch destinations; `--guide`
+selects the current documented commands while product bytes remain pinned:
+
+```sh
+python3 build/t034-executor-evidence/proof.py --repo "$PWD" \
+  --sha d0201de56111f14307d7a337f13dfa9e5315a003 \
+  --output build/t034-executor-evidence/replay-new \
+  --scratch /tmp/assertion-engine-t034-replay-new \
+  --uv-cache-source /home/luke/.cache/uv \
+  --python /home/luke/.local/share/uv/python/cpython-3.14.4-linux-x86_64-gnu/bin/python3.14 \
+  --guide specs/001-telemetry-simulator/quickstart.md
+MPLBACKEND=TkAgg uv run python build/t034-main-evidence/native_gui.py \
+  --repo "$PWD" --sha d0201de56111f14307d7a337f13dfa9e5315a003 \
+  --telemetry build/artifacts/t034-main-native-gui/telemetry.json \
+  --ground-truth build/artifacts/t034-main-native-gui/ground-truth.json \
+  --output build/t034-main-evidence/native-gui-replay-new
+```
+
+When ignored proof files are unavailable, create a new detached checkout at
+the baseline SHA, copy the current quickstart there, select Python 3.14/uv
+0.11.9 and explicit writable cache/configuration/temporary paths, and unset
+inherited Python/pytest/project-environment overrides including `UV_NO_SYNC`.
+Run the four table entrypoints, then the numbered quickstart commands exactly.
+Require three equal hashes per artifact, overwrite exit `2` with unchanged
+inputs/tree, a valid terminal PNG and both post-playback checksum results `OK`.
+Use a real available GUI backend/display for its separate interactive controls
+and visual checks; closing the window normally must return exit `0`.
+Compare all product files against the pinned SHA before/after. The guide's
+explicit names and expected outcomes supply the committed reproduction path;
+the scratch drivers supplement it with captured assertions and raw records.
+
+T034 awaits independent review and main replay. T035–T036 and full M0 acceptance
+remain pending; this record does not mark the feature ready to merge.
