@@ -1394,3 +1394,176 @@ T036, CP6 or M0 complete and does not resolve handoff Open Questions.
   and full M0 acceptance remain pending; PR `#5` stays draft. Luke requires all
   remaining handoff Open Questions and their failure to be surfaced during SDD
   to be reviewed together at spec001 closeout; this slice does not resolve them.
+
+## T036 — final M0 acceptance — 2026-10-09
+
+Product baseline: `5689e7cf0d78e12d10c14420d1995cadfaee4897`.
+T001–T035 are reviewed and main-verified. The remaining scope is one checkpoint,
+T036, so the delegation gate selects inline acceptance followed by independent
+review. This slice changes only validation evidence and task markers. It adds
+no product code or tests and claims no new test-first RED.
+
+Main uses the new detached clone `/tmp/assertion-engine-t036-main-2`, CPython
+`3.14.4`, uv `0.11.9`, Matplotlib `3.11.2`, jsonschema `4.26.0`, pytest `9.1.1`
+and Ruff `0.16.10`. Its own `.venv`, installed product module origins, both
+console entrypoints and offline schema contents are checked against that clone.
+Writable uv/Python/Matplotlib/temp locations are explicit beneath
+`build/t036-main-evidence/run-2/environment/`; provisioned caches allow offline
+sync. Inherited Python/pytest/uv environment overrides are removed and bytecode
+writes are disabled. All 122 tracked files match the pinned SHA before and
+after the initial gate; Git status is empty.
+
+| Unchanged CI/local entrypoint | Main baseline result |
+| --- | --- |
+| `uv sync --locked` | exit `0` |
+| `uv run ruff format --check .` | `79 files already formatted` |
+| `uv run ruff check .` | `All checks passed!` |
+| `MPLBACKEND=Agg uv run pytest` | `403 passed in 29.86s`, zero skips |
+
+### Installed CLI and artifact acceptance
+
+Three actual installed `assertion-sim generate` processes publish fresh pairs
+under the clone's `build/t036-artifacts/fresh/1`, `/2` and `/3`. Each initially
+contains exactly two files. Each compact stdout object has exactly the four
+contract keys; its paths and hashes match the actual files. Complete bytes
+match across all three runs, with these SHA-256 values:
+
+- Telemetry: `1cc55ccd8ba9fa11d2c242704ad5503d0e82635bb22c1c2c654cbcffe540494b`.
+- Ground truth: `b12d092c618dc03f06e63984cfba3a10d9c3d712535dca747784422c38e6fac7`.
+
+Actual loader/canonical validation confirms telemetry `1.0.0`, ground truth
+`2.0.0`, identical normalized source, 451 contiguous six-field snapshots,
+mission time 0–45 s, five phases in order with boundaries
+`0, 100, 150, 250, 350`, and terminal origin/zero velocity/91% battery.
+The full gate includes literal rate/time/phase/vehicle/battery assertions and
+the A1 rounded-time collision case; the acceptance probe supplements them.
+
+| Real installed command case | Exit and observed side effects |
+| --- | --- |
+| Valid generate into initially absent nested parents | `0`; complete pair published |
+| Retry existing pair | `2`, `target already exists`; both bytes and exact directory contents unchanged |
+| Invalid arguments / 45.0000004 s terminal config | `2`; explicit absent parent trees stay absent, terminal diagnostic present |
+| File as output ancestor | `1`; path diagnostic, original ancestor bytes retained, final target absent |
+| Valid headless playback | `0`; terminal PNG fully decoded at 1440 × 960, JSON input hashes unchanged |
+| Speed `0` / `-1`, missing input / missing PNG parent | `2`; no output or missing parent created |
+| Ground truth `1.0.0` / `9.0.0` | `2`; version diagnostic, legacy regeneration guidance, no PNG, all inputs unchanged |
+| Missing-field / wrong-sequence / extra-phase telemetry | `2`; no PNG, copied invalid input and original pair unchanged |
+| Headless output aliases either JSON input | `2`; both original hashes unchanged |
+
+The unchanged targeted command
+`MPLBACKEND=Agg uv run pytest tests/integration/test_generate_failures.py tests/integration/test_playback_read_only.py tests/architecture/test_dependency_boundaries.py`
+reports `119 passed in 19.64s`, zero skips. Its assertions also cover staging,
+write and publication failures, cleanup that preserves existing parents and
+sentinels, mismatched sources, rendering/input-I/O failures and executable
+dependency boundaries. These injected operational errors run real product
+entrypoints with substituted I/O boundaries; they are not rewritten CLI logic.
+
+### Fresh rendered and native acceptance
+
+Main actually opens five freshly generated phase images under the clone's
+`build/t036-artifacts/`: `takeoff.png`, `hover.png`, `northbound.png`,
+`return.png` and `landing.png`. Their selected snapshots are respectively
+0/100/150/250/450, at 0/10/15/25/45 s. Phase/time labels are readable; the N/E
+marker and all three time cursors match the selected saved event; five colored
+annotations remain ordered. The route reaches north 20 m and returns to the
+origin, altitude rises to 10 m then falls to zero, speed matches the phases,
+and battery falls linearly from 100% to 91%. Main separately opens the installed
+headless `terminal.png` and the real Tk terminal canvas: landing/45 s/snapshot
+450/completed, origin, zero altitude/speed and 91% battery are visible.
+
+Fresh native evidence is under the clone's `build/t036-native-controls/`.
+The existing inspected Tk driver runs the installed playback `cli.main`,
+actual `MatplotlibView.show()`/Tk mainloop/`TimerTk` and monotonic clock. It
+checks 13 control checkpoints, 11 real Tk release events and 38 real timer
+ticks, returning CLI exit `0`. Generated canvas events exercise Play, Pause,
+one-snapshot Step, speed slider, resume, Restart, completed controls and Restart
+after completion. At every observation, snapshot identity/time, sequence-based
+phase, drawn cursors, input hashes and canonical domain bytes are unchanged.
+This is automated native GUI interaction; no human manual interaction is claimed.
+
+Two driver errors are retained and excluded from product RED: run 1 attempted
+to assign the read-only `cursor` property before rendering; the correction uses
+the real `step()` method. The initial run-2 native attempt completed its control
+sequence but could not express an evidence path relative to the clone because
+its output was outside that clone. The retry uses a new checkout-local evidence
+directory and passes. Raw failing and successful outputs are kept separately;
+passed gate/CLI/render checks are not repeated for the native path repair.
+
+### Whole-gate negatives and hosted policy
+
+The committed self-contained T032 procedure is executed at this current product
+SHA in two new clones, `/tmp/assertion-engine-t036-main-2-negative-phase` and
+`/tmp/assertion-engine-t036-main-2-negative-bytes`. Its exact gate commands are
+unchanged. Sync and both Ruff commands remain successful under each mutation;
+the failure comes from product assertion tests, not environment/import errors.
+
+| Isolated current-head gate | Clean baseline | Mutated pytest, exit `1` | Restored full gate |
+| --- | --- | --- | --- |
+| Extra snapshot `phase` in product serializer | `403 passed in 27.19s` | `8 failed, 395 passed in 24.42s` | `403 passed in 26.70s` |
+| Per-call trailing spaces in canonical bytes | `403 passed in 27.20s` | `23 failed, 380 passed in 16.98s` | `403 passed in 28.00s` |
+
+Phase mutation fails
+`tests/contract/test_gate_rejection.py::test_FR011_FR018_SC006_canonical_positive_controls`.
+Byte mutation fails
+`tests/contract/test_canonical_serialization.py::test_FR011_sorted_compact_utf8_single_lf_repeated`
+with its fixed-literal byte difference (`1 failed in 0.15s` when isolated).
+The fresh-process SC-001 test still passes (`1 passed in 1.46s`) because the
+counter resets in each CLI process; this known limitation remains explicit.
+After restoration, main independently compares all 122 tracked files in each
+of the three clones to the pinned SHA and verifies empty Git status. No
+discarded mutation occurs in the primary workspace.
+
+Fresh read-only GitHub API evidence in
+`build/t036-main-evidence/github-baseline/` confirms PR `#5` OPEN/draft at the
+same baseline SHA; both [PR run](https://github.com/lukeking/assertion-engine/actions/runs/37854748570)
+and [push run](https://github.com/lukeking/assertion-engine/actions/runs/37854742056)
+are SUCCESS and all four exact gate steps are successful. Effective main rules
+still require `change-gate` from Actions app `15368`, strict up-to-date policy,
+`do_not_enforce_on_create: false`; active ruleset `20876648` scopes only main
+and has no bypass actors. The hosted-policy boundary remains the T033 live
+policy/check/official-semantics boundary, with no blocked-merge experiment.
+An initial step extractor included two Actions setup steps and therefore failed
+its four-step-count assertion; retained raw job responses were reconciled using
+the four actual gate command names. This probe error is not a workflow failure.
+
+### Current-head reproduction and scope
+
+Raw commands/exits/stdout/stderr, environment identity, manifests and hashes
+are in `build/t036-main-evidence/run-2/`. The local acceptance driver is
+`build/t036-main-evidence/acceptance.py`; its native dependency is the preserved
+`build/t034-main-evidence/native_gui.py`, and its clean-environment bootstrap is
+`build/t035-executor-evidence/proof.py`. These ignored helpers are evidence
+carriers, not prerequisites for acceptance on another machine.
+
+Without ignored helpers, create a new detached clone at the chosen SHA, verify
+tracked bytes and clean status, and use the explicit environment/origin/schema
+checks from the T035 standalone procedure. Execute the committed
+[quickstart](quickstart.md) in that clone with three new destinations: locked
+sync, three installed generations, byte hashes, overwrite refusal, installed
+headless terminal PNG and all four unchanged gate commands. Run the targeted
+error/boundary command above. Use the actual GUI backend/display and quickstart
+controls for native acceptance, retaining before/after hashes and stating
+whether the controls were human-operated or automated. Open the terminal and
+five phase images rather than substituting file-existence checks.
+
+To reproduce the five saved-event views, load the generated pair with
+`load_pair`, construct `PlaybackSession(*pair)` and `MatplotlibView(session)`,
+and call `session.step()` until each literal cursor 0/100/150/250/450. Save each
+view with its phase filename and check label/marker/cursor data against the
+selected original snapshot before opening it. Do not assign the read-only
+cursor or call Simulator from playback. Execute the committed self-contained
+T032 snippet with the chosen current SHA and two new `/tmp` clone names to
+reproduce whole-gate negatives. Use T033's read-only GitHub commands with the
+current PR head/run IDs to refresh hosted evidence.
+
+FR-012/FR-016 scope remains M0 Simulator, shared artifact validation and
+read-only playback. The architecture gate checks empty DSL/Evaluator/Fuzzer
+packages and forbidden imports. The accepted ADR/spec excludes raw sensors,
+noise/estimator fidelity, rules/grammar, ingestion, alerts and real hardware.
+The T035 requirement/algorithm concordance and E2/E3 latency boundaries remain
+applicable; this slice makes no Evaluator latency or physical-fidelity claim.
+
+T036 awaits independent review and main replay. CP6/full M0 acceptance and PR
+ready/closeout are not declared here. Luke's required joint disposition of all
+handoff Open Questions, the SDD carry-forward gap and slice-selection standard
+must precede ready/closeout; user decisions cannot be filled in by an agent.
