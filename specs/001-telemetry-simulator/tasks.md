@@ -108,7 +108,7 @@
 
 - [X] T034 核對並更新 `specs/001-telemetry-simulator/quickstart.md` 的 locked sync、三次生成、hash comparison、interactive／headless 與 gate 步驟；在明示的 `build/artifacts/` 新目錄或 disposable checkout 執行，記錄於 `specs/001-telemetry-simulator/validation.md`，保留拒絕覆寫行為。（depends on CP5）
 - [X] T035 在 `specs/001-telemetry-simulator/validation.md` 彙整 FR-001–FR-018 與 SC-001–SC-006 的測試／rendered evidence／runner 摘要、版本與環境；核對 T007／T012／T014／T022／T023 的模組引用與 `docs/algorithms/001-m0-telemetry-and-playback.md` 來源、章節、白話與資料對應一致。核對 `.specify/memory/constitution.md` 原則 II 已填入的 ladder、`specs/001-telemetry-simulator/research.md` 推導與 10/20/50/100 Hz 生成測試一致，記錄 `1/rate` 導出的 100/50/20/10 ms 與 10-rule future corpus；保留 E2/E3 標記，不宣稱 Evaluator latency E1 或效能 Gate。（depends on T034）
-- [-] T036 依 `specs/001-telemetry-simulator/spec.md` 完整核對兩個 CLI、artifact versions、error side effects、五階段 rendered 視覺驗收與 M0 scope，重跑最終 Ruff／Agg pytest 並在 `specs/001-telemetry-simulator/validation.md` 記錄結果；只有實作、review 與主代理複驗均完成才翻轉相應任務標記。（depends on T035）
+- [X] T036 依 `specs/001-telemetry-simulator/spec.md` 完整核對兩個 CLI、artifact versions、error side effects、五階段 rendered 視覺驗收與 M0 scope，重跑最終 Ruff／Agg pytest 並在 `specs/001-telemetry-simulator/validation.md` 記錄結果；只有實作、review 與主代理複驗均完成才翻轉相應任務標記。（depends on T035）
 
 **Checkpoint CP6**: 三個 stories 與完整 quickstart 成立，證據可追溯；feature 才進入 PR ready／closeout。
 

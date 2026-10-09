@@ -1567,3 +1567,49 @@ T036 awaits independent review and main replay. CP6/full M0 acceptance and PR
 ready/closeout are not declared here. Luke's required joint disposition of all
 handoff Open Questions, the SDD carry-forward gap and slice-selection standard
 must precede ready/closeout; user decisions cannot be filled in by an agent.
+
+## T036 approval and main replay — 2026-10-09
+
+- Independent fresh-context review of the complete slice
+  `5689e7cf0d78e12d10c14420d1995cadfaee4897..0478ff79cac1a9b29f1a1804b4ce2f4af4ed0720`
+  is **APPROVED**, with no blocking or non-blocking findings. Only validation
+  and T036's awaiting-review marker changed. The reviewer constructs its own
+  literal oracle for all 451 baseline snapshots, source, timeline and rendered
+  artist data; it does not run the implementer's acceptance driver.
+- Frozen reviewer proof SHA-256:
+  `2fa6add9949b806850c7e43d9d5aa352e7e32f59979a30c4702036dd20c8bd5b`.
+  Reviewer exact baseline/mutated/restored gate summaries are
+  `403 passed in 24.94s`, `23 failed, 380 passed in 13.91s`, and
+  `403 passed in 23.01s`, zero skips. Focused errors/boundaries report
+  `119 passed in 15.93s`; fixed-literal FR-011 reports `1 failed in 0.14s`
+  under mutation, while process-reset SC-001 remains `1 passed in 1.42s`.
+  Fresh native Tk passes 13 controls, 11 release events and 34 timer ticks,
+  CLI exit `0`; reviewer actually opens all seven fresh images and the seven
+  corresponding supplied images. A corrected viewer-path error is retained
+  outside product RED.
+- Main replays that same proof unchanged in
+  `/tmp/assertion-engine-t036-main-review-replay` at reviewed SHA `0478ff79`.
+  Exact baseline/mutated/restored gate results are
+  `403 passed in 23.20s`, `23 failed, 380 passed in 14.97s`, and
+  `403 passed in 23.32s`, zero skips; sync/both Ruff commands pass.
+  Focused errors/boundaries report `119 passed in 16.04s`; FR-011 mutation
+  reports `1 failed in 0.14s`, counter-reset SC-001 `1 passed in 1.52s`.
+  Fresh native Tk passes 13 controls/11 releases/33 ticks and CLI exit `0`.
+  Main actually opens the five fresh phase PNGs, installed headless terminal
+  and real native canvas; labels, route, all three plots and terminal values
+  remain correct. Inputs and domain bytes remain equal.
+- Main independently reads all 42 replay command records, checks expected exits
+  and raw runner summaries, confirms the frozen proof hash, and compares every
+  tracked byte in both reviewer/main clones to the reviewed SHA: 122 files
+  each, clean status. Primary before/after manifests are identical. Every
+  mutation was confined to the pinned disposable clones and restored.
+- Reviewer artifacts are `build/t036-reviewer-evidence/{proof.py,REPLAY.md,report.md,final-inspection.json}`
+  and `run-1/`; main unchanged replay is `main-replay/` there. Main's separate
+  raw/image/byte inspection is `build/t036-main-evidence/review-final-inspection.json`.
+  `REPLAY.md` provides the exact frozen command; the committed standalone
+  quickstart/T032/T033/T036 procedures remain sufficient without ignored helpers.
+- T036 promotes to `[X]` only in this separate post-approval commit. All 36
+  implementation tasks are reviewed and main-verified at the stated evidence
+  boundaries. PR `#5` remains draft pending Luke's required disposition of
+  the remaining handoff/process questions before ready/closeout. `GAR-17` is
+  the external feature tracker; its completed status belongs after merge.
