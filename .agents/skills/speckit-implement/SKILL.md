@@ -1,6 +1,6 @@
 ---
 name: "speckit-implement"
-description: "Execute the implementation plan by processing and executing all tasks defined in tasks.md"
+description: "Execute one related implementation slice from tasks.md, finish review and remediation, then close the Codex session"
 compatibility: "Requires spec-kit project structure with .specify/ directory"
 metadata:
   author: "github-spec-kit"
@@ -15,6 +15,16 @@ $ARGUMENTS
 ```
 
 You **MUST** consider the user input before proceeding (if not empty).
+
+This entrypoint is for Codex. When running in Claude, use
+`.claude/skills/speckit-implement/SKILL.md` instead of executing the steps in this file.
+
+## Codex session scope
+
+When running in Codex, read `~/.agents/adapters/codex/session-workflow.md` before the
+steps below. Select one related reviewable slice, finish its review/remediation and local handoff, then end the
+turn. Apply the delegation gate to the entire remaining feature, as step 5a requires;
+that gate does not expand this session's selected slice.
 
 ## Pre-Execution Checks
 
@@ -143,12 +153,17 @@ You **MUST** consider the user input before proceeding (if not empty).
    - **Task details**: ID, description, file paths, parallel markers [P]
    - **Execution flow**: Order and dependency requirements
 
-6. Execute implementation following the task plan:
-   - **Phase-by-phase execution**: Complete each phase before moving to the next
+5a. **Delegation gate — required before implementation**:
+   - Read `~/.agents/skills/delegated-tdd/SKILL.md` §0, gate the entire remaining scope even for a single-task request, and announce the rung before step 6. Follow that skill's templates and review/verification protocol.
+   - Verify per-layer runners from the actual project files and `CLAUDE.local.md` when available. Before T002, setup has no project runner (L3, inline, degraded); after T002, the planned runner is `MPLBACKEND=Agg uv run pytest` for contract, unit, integration, and architecture tests. Confirm it is executable and re-gate the remaining scope. Require meaningful assertion-based RED from behavioral tests; sync/collection/lint success and import errors do not count.
+   - On Codex, perform the protocol's evidence checks explicitly; do not assume Claude lifecycle hooks enforce them.
+
+6. Execute the selected session slice following the task plan:
+   - **Scope and prerequisites**: Complete the selected slice; leave later checkpoints for a new session
    - **Respect dependencies**: Run sequential tasks in order, parallel tasks [P] can run together  
    - **Follow TDD approach**: Execute test tasks before their corresponding implementation tasks
    - **File-based coordination**: Tasks affecting the same files must run sequentially
-   - **Validation checkpoints**: Verify each phase completion before proceeding
+   - **Validation checkpoint**: Finish the selected slice's review and main verification before local handoff
 
 7. Implementation execution rules:
    - **Setup first**: Initialize project structure, dependencies, configuration
@@ -163,14 +178,14 @@ You **MUST** consider the user input before proceeding (if not empty).
    - For parallel tasks [P], continue with successful tasks, report failed ones
    - Provide clear error messages with context for debugging
    - Suggest next steps if implementation cannot proceed
-   - **IMPORTANT** For completed tasks, make sure to mark the task off as [X] in the tasks file.
+   - **IMPORTANT** Track tasks as `[ ]` not started → `[-]` implemented, awaiting review → `[X]` reviewed and main-verified. Commit implementation with `[-]`; promote to `[X]` only in a separate post-approval commit after the main agent re-runs the review evidence and resolves accepted findings, following the delegated-TDD protocol. Include the three-state legend in tasks.md when `[-]` is used.
 
-9. Completion validation:
-   - Verify all required tasks are completed
-   - Check that implemented features match the original specification
-   - Validate that tests pass and coverage meets requirements
-   - Confirm the implementation follows the technical plan
-   - Report final status with summary of completed work
+9. Session completion validation:
+   - Verify the selected tasks are reviewed and main-verified before marking them `[X]`
+   - Check that the slice matches its specification and technical plan
+   - Run its required checks and resolve accepted review findings
+   - Report the slice's result and the remaining feature tasks; full-feature acceptance is separate
+   - After step 10, write the local handoff and end the turn without starting another checkpoint
 
 Note: This command assumes a complete task breakdown exists in tasks.md. If tasks are incomplete or missing, suggest running `/speckit-tasks` first to regenerate the task list.
 

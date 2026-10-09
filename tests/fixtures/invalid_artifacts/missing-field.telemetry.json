@@ -1,0 +1,31 @@
+{
+  "artifact_version": "1.0.0",
+  "scenario": {
+    "name": "fixture-flight",
+    "version": "1.0.0",
+    "seed": 42,
+    "config": {
+      "schema_version": "1.0.0",
+      "vehicle_id": "vehicle-001",
+      "target_altitude_m": 1,
+      "climb_rate_mps": 1,
+      "hover_duration_s": 1,
+      "northbound_distance_m": 1,
+      "cruise_speed_mps": 1,
+      "descent_rate_mps": 1,
+      "observation_spacing_m": 1,
+      "sample_rate_hz": 1,
+      "sample_interval_s": 1,
+      "initial_battery_percent": 100,
+      "battery_drain_percent_per_s": 0.2
+    }
+  },
+  "snapshots": [
+    {"vehicle_id": "vehicle-001", "sequence_number": 0, "mission_time_s": 0, "position_ned_m": [0, 0, 0], "velocity_ned_mps": [0, 0, -1]},
+    {"vehicle_id": "vehicle-001", "sequence_number": 1, "mission_time_s": 1, "position_ned_m": [0, 0, -1], "velocity_ned_mps": [0, 0, 0], "battery_percent": 99.8},
+    {"vehicle_id": "vehicle-001", "sequence_number": 2, "mission_time_s": 2, "position_ned_m": [0, 0, -1], "velocity_ned_mps": [1, 0, 0], "battery_percent": 99.6},
+    {"vehicle_id": "vehicle-001", "sequence_number": 3, "mission_time_s": 3, "position_ned_m": [1, 0, -1], "velocity_ned_mps": [-1, 0, 0], "battery_percent": 99.4},
+    {"vehicle_id": "vehicle-001", "sequence_number": 4, "mission_time_s": 4, "position_ned_m": [0, 0, -1], "velocity_ned_mps": [0, 0, 1], "battery_percent": 99.2},
+    {"vehicle_id": "vehicle-001", "sequence_number": 5, "mission_time_s": 5, "position_ned_m": [0, 0, 0], "velocity_ned_mps": [0, 0, 0], "battery_percent": 99}
+  ]
+}

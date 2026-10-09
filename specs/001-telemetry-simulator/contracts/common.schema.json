@@ -1,0 +1,115 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/lukeking/assertion-engine/main/specs/001-telemetry-simulator/contracts/common.schema.json",
+  "title": "Assertion Engine M0 common artifact definitions",
+  "$defs": {
+    "nedVector": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      },
+      "minItems": 3,
+      "maxItems": 3
+    },
+    "normalizedConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "vehicle_id",
+        "target_altitude_m",
+        "climb_rate_mps",
+        "hover_duration_s",
+        "northbound_distance_m",
+        "cruise_speed_mps",
+        "descent_rate_mps",
+        "observation_spacing_m",
+        "sample_rate_hz",
+        "sample_interval_s",
+        "initial_battery_percent",
+        "battery_drain_percent_per_s"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": "1.0.0"
+        },
+        "vehicle_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "target_altitude_m": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "climb_rate_mps": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "hover_duration_s": {
+          "type": "number",
+          "minimum": 0
+        },
+        "northbound_distance_m": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "cruise_speed_mps": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "descent_rate_mps": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "observation_spacing_m": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "sample_rate_hz": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "sample_interval_s": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "initial_battery_percent": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "battery_drain_percent_per_s": {
+          "type": "number",
+          "minimum": 0
+        }
+      }
+    },
+    "scenarioSource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "version",
+        "seed",
+        "config"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+        },
+        "seed": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "config": {
+          "$ref": "#/$defs/normalizedConfig"
+        }
+      }
+    }
+  }
+}
