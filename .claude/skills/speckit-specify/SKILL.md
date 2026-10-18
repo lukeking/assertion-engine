@@ -60,6 +60,9 @@ The text the user typed after `/speckit-specify` in the triggering message **is*
 
 Given that feature description, do this:
 
+0. **Record check — required before writing the spec**:
+   - Read the "Spec start record check" section of `~/.agents/README.md` and answer its three questions out loud before step 6, then put its `Record:` line under the spec's title. Without `~/.agents`, say the check did not run.
+
 1. **Generate a concise short name** (2-4 words) for the feature:
    - Analyze the feature description and extract the most meaningful keywords
    - Create a 2-4 word short name that captures the essence of the feature
