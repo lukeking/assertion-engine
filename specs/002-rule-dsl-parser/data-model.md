@@ -48,7 +48,8 @@ rule-set derived declarations come from `[derived]`. Both kinds are parsed and c
 ### Rule set
 
 `schema_version`, ordered `parameters`, `derived`, `rules` (file order). A checked rule set additionally maps
-every node of every tree to its type.
+every node of every tree to its type, and every `Name` node to what it resolved to: field, derived quantity or
+parameter.
 
 ### Diagnostic
 
@@ -85,6 +86,11 @@ level sequence of this table, as implemented in `parser.py`, with the level list
 
 `then`, `else`, `,`, `)` and end of input have binding power 0: they end the current operand.
 
+**Parse depth limit**: the parser counts nested operand parses (each parenthesized group, prefix operand,
+call or temporal argument opens one level) and rejects depth 101 with `nesting_too_deep` before Python's
+recursion limit can be reached. E1: CPython 3.14.4 `sys.getrecursionlimit()` is 1000. E3: 100 levels is far
+above the corpus (its deepest rule nests a handful of levels) and leaves several Python frames per level.
+
 ## Production coverage
 
 The parser takes an optional collector and records a grammar production name each time it builds that
@@ -106,6 +112,7 @@ a `used by:` annotation in grammar.ebnf (SC-006); the 8 structural productions a
 | parser | `chained_comparison` | `0 < battery_percent < x` |
 | parser | `reserved_word` | `a < b or c < d`; a parameter named `not` |
 | parser | `invalid_axis` | `position_ned_m.x` |
+| parser | `nesting_too_deep` | 101 nested `(`; 101 consecutive unary `-` |
 | rule set | `invalid_ruleset` | TOML syntax error, unknown key, missing `expression`, wrong `schema_version` |
 | rule set | `unknown_unit` | `unit = "km"` |
 | rule set | `name_conflict` | a parameter named `altitude_m`; the same name in `parameters` and `derived` |

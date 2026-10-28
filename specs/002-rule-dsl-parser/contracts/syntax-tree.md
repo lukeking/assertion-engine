@@ -53,5 +53,6 @@ Associativity is visible in the tree: `a - b - c` is `Arithmetic(-, Arithmetic(-
 ## Checker annotations (not part of the golden tree)
 
 The checker (contracts/ruleset.md, data-model.md) returns each node's type — `bool`, `scalar[<unit>]` or
-`vector[<unit>]` — keyed by node identity. Tree images (FR-014) show them; golden trees do not, so a checker
-change cannot silently rewrite the syntax regression suite.
+`vector[<unit>]` — keyed by node identity, and for each `Name` node what it resolved to (`field`, `derived`,
+`parameter`). Tree images (FR-014) show both; golden trees do not, so a checker change cannot silently rewrite
+the syntax regression suite.

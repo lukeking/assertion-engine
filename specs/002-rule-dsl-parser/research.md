@@ -236,7 +236,7 @@ TOML 本身的語法錯誤則回報檔案的行與欄。
 ## Decision 8: 語法樹圖——Matplotlib，葉節點依序排、父節點置中
 
 **Decision**: 用現有的 Matplotlib（Agg backend）畫 PNG。版面：葉節點由左到右依原文順序排，父節點的水平位置是子節點的平均，
-深度決定高度。節點標籤是節點種類加原文片段；checker 成功時附上量綱。
+深度決定高度。節點標籤是節點種類加原文片段；checker 成功時附上量綱，`Name` 節點另標它解析成欄位、衍生量還是具名門檻。
 
 **E1**: 本機沒有 Graphviz 的 `dot`；Matplotlib 3.11.2 已是專案依賴。
 

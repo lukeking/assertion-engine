@@ -22,7 +22,7 @@ M1 只解析、不評估：時間保留字有語法與型別，語意屬於 M2�
 **Performance Goals**: 不適用。規則在載入時解析一次，不在逐筆事件的路徑上；M1 不做延遲宣稱（research Decision 10）
 **Constraints**: fail-closed，第一個錯誤就停；同一文字的語法樹 byte-identical；運算式只接受 ASCII；
 `dsl` 不得引用 evaluator／fuzzer／simulator／playback；fuzzer 不得引用 `dsl`（既有）
-**Scale/Scope**: 17 條語料規則、1 個規則集衍生量＋4 個內建衍生量、27 個具名門檻；21 個錯誤碼 × 至少 2 例 ＝ 至少 42 個無效案例
+**Scale/Scope**: 17 條語料規則、1 個規則集衍生量＋4 個內建衍生量、27 個具名門檻；22 個錯誤碼 × 至少 2 例 ＝ 至少 44 個無效案例
 
 ## Constitution Check
 
@@ -131,7 +131,7 @@ syntax、units、vocabulary；ruleset 串起整條載入流程；tree_view 與 c
   因為 `canonical_bytes` 會量化數值（E1：`src/assertion_engine/artifacts.py:97`）。
 - [contracts/ruleset.md](contracts/ruleset.md)：TOML 形狀、單位表、內建詞彙、時間保留字的型別、型別與量綱規則。
 - [contracts/cli.md](contracts/cli.md)：`check`／`dump`／`tree`、診斷格式、exit code；`tree` 拒絕覆寫既有檔案。
-- [data-model.md](data-model.md)：實體、九步載入流程、Pratt 結合力表、產生式覆蓋率收集、21 個錯誤碼的封閉清單。
+- [data-model.md](data-model.md)：實體、九步載入流程、Pratt 結合力表、產生式覆蓋率收集、解析深度上限、22 個錯誤碼的封閉清單。
 - [quickstart.md](quickstart.md)：所有輸出寫到 `mktemp -d`，不寫進工作樹。
 
 ### 測試的獨立性
@@ -152,8 +152,8 @@ SC-007 的咬合檢查：parser 的結合力表可以從參數注入；測試把
 2. lexer → syntax → parser，先達 Gate「基本規則」（SC-001），再補時間保留字（SC-002、SC-003）。
 3. units → vocabulary → checker → ruleset（含錯誤碼與無效案例，SC-005）。
 4. 覆蓋率與咬合測試（SC-006、SC-007）、決定性（SC-008）。
-5. CLI 與語法樹圖（FR-014），user 看圖簽核（SC-009）。
-6. 白話橋接文件（FR-015）與 README 的套件表更新。
+5. 語法樹圖（FR-014）在 checker 完成後就先做，讓基本規則的樹早點看得到（learning-style：視覺化不推遲到最後）。
+6. 覆蓋率與咬合測試、白話橋接文件（FR-015）、user 看 17 張圖簽核（SC-009）與 README 的套件表更新。
 
 ## Post-Design Constitution Re-check
 

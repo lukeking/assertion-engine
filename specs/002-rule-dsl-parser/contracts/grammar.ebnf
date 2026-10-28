@@ -125,4 +125,6 @@ slope          = "slope" , "(" , expression , "," , expression , ")" ;
    - Reserved words (no production in M1; using one is error reserved_word):  or not
    - Only ASCII is accepted; any other character is error invalid_character.
    - A number immediately followed by a letter or "." without a digit (e.g. "1e3", "2.") is
-     error invalid_number. There is no leading "+" and no exponent form. *)
+     error invalid_number. There is no leading "+" and no exponent form.
+   - Nesting deeper than 100 operand levels (parentheses, prefix "-", call and temporal
+     arguments) is error nesting_too_deep (data-model.md "Parse depth limit"). *)

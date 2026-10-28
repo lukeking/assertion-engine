@@ -9,7 +9,8 @@ first (contracts/ruleset.md); a rule set with any error is rejected before a com
 
 Loads and checks the rule set.
 
-- Success: stdout `ok: <R> rules, <D> derived, <P> parameters`; exit 0.
+- Success: stdout `ok: <R> rules, <D> derived, <P> parameters`; exit 0. `<D>` counts the rule set's own
+  `[derived]` entries; the 4 built-in derived quantities are not counted.
 - Invalid rule set: stderr one diagnostic (format below); exit 1; nothing on stdout.
 
 ### `assertion-rules dump --ruleset PATH --rule SHORT-NAME`
