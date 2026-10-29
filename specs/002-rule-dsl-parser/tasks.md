@@ -115,7 +115,7 @@
   在 `src/assertion_engine/dsl/__init__.py` 匯出 `load_ruleset`、`parse_expression`、`Diagnostic`、`RuleSetError`；讓 T017、T018 通過。（depends on T022、T023、T017）
 - [-] T025 [US2] 在 `src/assertion_engine/dsl/cli.py` 實作 `check` 與 `dump` 及診斷格式；在 `pyproject.toml` 加入 `assertion-rules = "assertion_engine.dsl.cli:main"`，
   驗證 `uv sync --locked` 仍成功；讓 T019 通過。（depends on T024、T019）
-- [ ] T026 [US2] 在 `specs/002-rule-dsl-parser/validation.md` 記錄 21 個錯誤碼的案例數、runner 摘要與 RED→GREEN 紀錄。（depends on T025）
+- [-] T026 [US2] 在 `specs/002-rule-dsl-parser/validation.md` 記錄 21 個錯誤碼的案例數、runner 摘要與 RED→GREEN 紀錄。（depends on T025）
 
 **Checkpoint CP4**: 錯的規則一律被拒並指出位置；基本規則集可經 CLI 檢查與輸出語法樹。
 

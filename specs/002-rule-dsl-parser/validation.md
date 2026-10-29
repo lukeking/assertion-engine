@@ -42,3 +42,44 @@ SC-008：每條規則解析 3 次 byte-identical 的測試在 stub 上也通過�
 
 Golden 的產生方式：結構比對全部通過後，以 `assertion_engine.dsl.parser.parse` 解析 `rules/corpus.toml`
 的運算式，寫出 `canonical_bytes({"rule": <短名>, "tree": to_document(tree)})`；golden 不手改。
+
+## 無效規則被拒並指出位置（SC-005）— CP4
+
+受測 commit：checker `631e882`（修正 `8bf798b`）；載入流程與語法錯誤碼 `2b5b5de`（修正 `20a063a`、
+contract 字句 `9a976a9`）；CLI `79f7cf8a8b90d5e8567b2467a5882b419e576490`。
+
+`tests/fixtures/invalid_rules.toml` 共 57 例，`nonpositive_duration` 以外的 21 碼各至少 2 例（`nonpositive_duration`
+屬時間保留字，T033 補）：
+
+| 錯誤碼 | 例數 | 錯誤碼 | 例數 | 錯誤碼 | 例數 |
+|---|---:|---|---:|---|---:|
+| `invalid_character` | 3 | `chained_comparison` | 3 | `unknown_name` | 3 |
+| `invalid_number` | 3 | `reserved_word` | 3 | `arity_mismatch` | 2 |
+| `empty_expression` | 2 | `invalid_axis` | 2 | `type_mismatch` | 3 |
+| `unexpected_token` | 3 | `nesting_too_deep` | 3 | `dimension_mismatch` | 2 |
+| `unexpected_end` | 3 | `invalid_ruleset` | 5 | `not_boolean_rule` | 3 |
+| `unclosed_parenthesis` | 3 | `unknown_unit` | 2 | `derived_unit_mismatch` | 2 |
+| `trailing_input` | 2 | `name_conflict` | 3 | `derived_cycle` | 2 |
+
+每例比對錯誤碼、位置與 owner，只對錯誤碼不會通過。
+
+RED→GREEN（executor 在 stub 上取得，main 重跑 GREEN）：
+
+- checker：stub（單位一律 (0,0,0)、checker 全部接受）`166 failed, 128 passed`（`tests/unit/dsl`）→
+  `294 passed`；全套 566 → 735。
+- 載入流程與語法錯誤碼：stub loader 加上當時的 lexer／parser，`139 failed, 558 passed`；CP3 留下的 6 種錯碼輸入
+  （`1e3`、`2.`、空字串、`(a + b`、`a < b < c`、`or`／`not`）各自失敗在錯誤碼斷言上，深度 101 為 `DID NOT RAISE`
+  → `tests/unit/dsl` `398 passed`、`tests/contract` `300 passed`；全套 997，`20a063a` 後 998。
+- CLI：stub（印錯的文字、exit code 錯）`17 failed, 4 passed`（通過的 4 例是 argparse 自己處理的缺參數）→
+  `22 passed`；全套 1020。
+- main 在 `79f7cf8`：`tests/unit/dsl`、`tests/contract/test_invalid_rules.py`、`tests/integration/test_rules_cli.py`
+  `579 passed`；Ruff `100 files already formatted`、`All checks passed!`；`uv sync --locked` 通過、`uv.lock` 不變。
+  直接執行 `assertion-rules`：`check` 印 `ok: 1 rules, 0 derived, 1 parameters`；拼錯名稱印 cli.md 格式的
+  標頭、原文行與 caret 行並 exit 1；`dump --rule battery-floor` 的 bytes 等於 golden。
+
+深度上限（user 2026-10-29 裁示保留現行計數，data-model「Parse depth limit」已改寫）：main 在 pin 於 `2b5b5de`
+的 worktree 實測三種計數——只數括號、前綴與參數時，600 個 `implies` → `RecursionError`；再加上 `implies`
+時，100 層 `(a and b < c + d * (…))` → `RecursionError`；現行的每個運算元一層，兩者都回 `nesting_too_deep`。
+
+CP3 比較運算子掃描留下的 `_unexpected` 存活突變（`==` 改 `!=`），在 `79f7cf8` 上讓 13 條測試失敗，已由
+T023 的錯誤路徑測試抓到。
