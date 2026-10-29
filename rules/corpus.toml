@@ -1,0 +1,169 @@
+# Corpus rule set (FR-001). Expressions are copied from research.md "17 條語料的寫法";
+# multi-line ones keep its line breaks, minus the 2-space indent under each rule name.
+schema_version = "1.0.0"
+
+[parameters.cruise_speed_mps]
+unit = "m/s"
+
+[parameters.descent_rate_mps]
+unit = "m/s"
+
+[parameters.battery_floor_percent]
+unit = "%"
+
+[parameters.altitude_ceiling_m]
+unit = "m"
+
+[parameters.horizontal_speed_max_mps]
+unit = "m/s"
+
+[parameters.drain_rate_percent_per_s]
+unit = "%/s"
+
+[parameters.return_reserve_percent]
+unit = "%"
+
+[parameters.fence_radius_m]
+unit = "m"
+
+[parameters.fence_altitude_m]
+unit = "m"
+
+[parameters.battery_low_percent]
+unit = "%"
+
+[parameters.low_battery_radius_m]
+unit = "m"
+
+[parameters.near_ground_altitude_m]
+unit = "m"
+
+[parameters.near_ground_descent_max_mps]
+unit = "m/s"
+
+[parameters.descent_max_mps]
+unit = "m/s"
+
+[parameters.heartbeat_max_s]
+unit = "s"
+
+[parameters.reaction_time_s]
+unit = "s"
+
+[parameters.closing_window_s]
+unit = "s"
+
+[parameters.battery_critical_percent]
+unit = "%"
+
+[parameters.battery_emergency_percent]
+unit = "%"
+
+[parameters.landed_altitude_m]
+unit = "m"
+
+[parameters.landing_deadline_s]
+unit = "s"
+
+[parameters.jump_rate_max_mps]
+unit = "m/s"
+
+[parameters.drain_window_s]
+unit = "s"
+
+[parameters.drain_rate_max_percent_per_s]
+unit = "%/s"
+
+[parameters.trend_window_s]
+unit = "s"
+
+[parameters.climb_window_s]
+unit = "s"
+
+[parameters.lookahead_s]
+unit = "s"
+
+[derived.return_time_s]
+unit = "s"
+expression = "home_distance_m / cruise_speed_mps + altitude_m / descent_rate_mps"
+
+[rules.battery-floor]
+category = "threshold"
+expression = "battery_percent >= battery_floor_percent"
+
+[rules.altitude-ceiling]
+category = "threshold"
+expression = "altitude_m <= altitude_ceiling_m"
+
+[rules.horizontal-speed-limit]
+category = "threshold"
+expression = "horizontal_speed_mps <= horizontal_speed_max_mps"
+
+[rules.return-reserve]
+category = "threshold"
+expression = "battery_percent > return_time_s * drain_rate_percent_per_s + return_reserve_percent"
+
+[rules.geofence-cylinder]
+category = "logic"
+expression = "home_distance_m <= fence_radius_m and altitude_m <= fence_altitude_m"
+
+[rules.low-battery-stay-close]
+category = "logic"
+expression = "battery_percent < battery_low_percent implies home_distance_m <= low_battery_radius_m"
+
+[rules.descent-speed-near-ground]
+category = "logic"
+expression = """
+descent_speed_mps <= (if altitude_m < near_ground_altitude_m
+                      then near_ground_descent_max_mps
+                      else descent_max_mps)"""
+
+[rules.telemetry-heartbeat]
+category = "temporal"
+expression = "mission_time_s - prev(mission_time_s) <= heartbeat_max_s"
+
+[rules.monotonic-sequence]
+category = "temporal"
+expression = "sequence_number == prev(sequence_number) + 1 and mission_time_s > prev(mission_time_s)"
+
+[rules.battery-tier-low]
+category = "temporal"
+expression = """
+held_for(battery_percent < battery_low_percent, reaction_time_s)
+  implies home_distance_m < ago(home_distance_m, closing_window_s)"""
+
+[rules.battery-tier-critical]
+category = "temporal"
+expression = """
+held_for(battery_percent < battery_critical_percent, reaction_time_s)
+  implies descent_speed_mps > 0"""
+
+[rules.battery-tier-emergency]
+category = "temporal"
+expression = """
+battery_percent < battery_emergency_percent
+  implies within(altitude_m < landed_altitude_m, landing_deadline_s)"""
+
+[rules.no-sudden-jump]
+category = "temporal"
+expression = """
+norm(position_ned_m - prev(position_ned_m)) / (mission_time_s - prev(mission_time_s))
+  <= jump_rate_max_mps"""
+
+[rules.battery-drain-rate]
+category = "trend"
+expression = "-slope(battery_percent, drain_window_s) <= drain_rate_max_percent_per_s"
+
+[rules.battery-runout-forecast]
+category = "trend"
+expression = """
+(battery_percent - battery_critical_percent) / -slope(battery_percent, trend_window_s)
+  >= return_time_s"""
+
+[rules.altitude-trend-ceiling]
+category = "trend"
+expression = "altitude_m + slope(altitude_m, climb_window_s) * lookahead_s <= altitude_ceiling_m"
+
+[rules.geofence-forecast]
+category = "trend"
+expression = "hnorm(position_ned_m + velocity_ned_mps * lookahead_s) <= fence_radius_m"
