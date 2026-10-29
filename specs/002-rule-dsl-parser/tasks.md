@@ -40,12 +40,12 @@
 
 **Purpose**: 所有 story 共用的不可變節點、正規序列化與封閉錯誤碼清單；不含 lexer、parser 或 checker 行為。
 
-- [ ] T004 [P] 在 `tests/unit/dsl/test_syntax.py` 撰寫：15 種節點可建構且不可變、以值比較相等；`to_document` 對每種節點輸出 `contracts/syntax-tree.md` 的欄位；
+- [-] T004 [P] 在 `tests/unit/dsl/test_syntax.py` 撰寫：15 種節點可建構且不可變、以值比較相等；`to_document` 對每種節點輸出 `contracts/syntax-tree.md` 的欄位；
   `contracts/syntax-tree.md` 範例樹經 `canonical_bytes` 等於該檔的字面 bytes（以字面值判定，不用受測程式產生預期值）；數字常值 `"0.0000005"` 序列化後不被量化。
-- [ ] T005 [P] 在 `tests/unit/dsl/test_errors.py` 撰寫：錯誤碼集合等於 `data-model.md` 的 22 個字面碼；`Diagnostic` 帶 code、message 與 expression／file 兩種 location；
+- [-] T005 [P] 在 `tests/unit/dsl/test_errors.py` 撰寫：錯誤碼集合等於 `data-model.md` 的 22 個字面碼；`Diagnostic` 帶 code、message 與 expression／file 兩種 location；
   `RuleSetError` 只帶一個 diagnostic。
-- [ ] T006 在 `src/assertion_engine/dsl/syntax.py` 實作 `Span`、15 種 frozen 節點與 `to_document()`，序列化交給 `assertion_engine.artifacts.canonical_bytes`；讓 T004 通過。（depends on T004）
-- [ ] T007 在 `src/assertion_engine/dsl/errors.py` 實作 `CODES`、`ExpressionLocation`、`FileLocation`、`Diagnostic`、`RuleSetError`；讓 T005 通過。（depends on T005）
+- [-] T006 在 `src/assertion_engine/dsl/syntax.py` 實作 `Span`、15 種 frozen 節點與 `to_document()`，序列化交給 `assertion_engine.artifacts.canonical_bytes`；讓 T004 通過。（depends on T004）
+- [-] T007 在 `src/assertion_engine/dsl/errors.py` 實作 `CODES`、`ExpressionLocation`、`FileLocation`、`Diagnostic`、`RuleSetError`；讓 T005 通過。（depends on T005）
 
 **Checkpoint CP2**: 節點與錯誤型別固定，canonical bytes 與 contract 範例逐位元組一致；story 可以開始。
 
