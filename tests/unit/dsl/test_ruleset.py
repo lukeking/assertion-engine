@@ -161,6 +161,14 @@ def test_FR011_duplicate_table_is_a_toml_syntax_error():
     assert diagnostic.location.file_line == 5
 
 
+def test_FR011_toml_too_deep_for_tomllib_is_invalid_ruleset():
+    # tomllib recurses per nested array and raises RecursionError, not a
+    # TOMLDecodeError; step 1 must still fail with a diagnostic.
+    diagnostic = rejection(b"x = " + b"[" * 2000 + b"]" * 2000)
+    assert diagnostic.code == "invalid_ruleset"
+    assert diagnostic.location == FileLocation(1, 1)
+
+
 @pytest.mark.parametrize(
     ("data", "location"),
     [

@@ -78,6 +78,10 @@ def load_ruleset(data: bytes) -> RuleSet:
     except tomllib.TOMLDecodeError as error:
         location = FileLocation(error.lineno, error.colno)
         raise RuleSetError(Diagnostic("invalid_ruleset", error.msg, location)) from None
+    except RecursionError:  # tomllib recurses once per nested array or table
+        message = "TOML nesting is too deep to decode"
+        location = FileLocation(1, 1)
+        raise RuleSetError(Diagnostic("invalid_ruleset", message, location)) from None
     _check_shape(document, text)  # 2
     _check_names(document, text)  # 3
     _check_units(document, text)
