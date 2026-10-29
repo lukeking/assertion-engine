@@ -2,6 +2,7 @@
 
 import pytest
 
+from assertion_engine.dsl.errors import ExpressionLocation, RuleSetError
 from assertion_engine.dsl.lexer import Token, tokenize
 from assertion_engine.dsl.syntax import Span
 
@@ -162,3 +163,35 @@ def test_FR003_whitespace_produces_no_tokens():
     assert tokens[0] == Token("name", "x", Span(2, 3, 2, 4))
     assert kinds("") == ["end_of_input"]
     assert kinds(" \n\t") == ["end_of_input"]
+
+
+# A number directly followed by a letter, "_" or "." is one malformed number,
+# located from its first digit to the next character no name or number has.
+
+
+@pytest.mark.parametrize(
+    ("text", "column", "fragment"),
+    [
+        ("1e3", 1, "1e3"),
+        ("x < 2.", 5, "2."),
+        ("2.n", 1, "2.n"),
+        ("2.5.1", 1, "2.5.1"),
+        ("1_000", 1, "1_000"),
+        ("(12abc+1)", 2, "12abc"),
+    ],
+)
+def test_FR003_number_run_into_a_letter_or_dot_is_invalid_number(
+    text, column, fragment
+):
+    with pytest.raises(RuleSetError) as caught:
+        tokenize(text)
+    assert caught.value.diagnostic.code == "invalid_number"
+    assert caught.value.diagnostic.location == ExpressionLocation(
+        1, column, column + len(fragment), fragment
+    )
+
+
+def test_FR003_a_separator_ends_a_number():
+    assert kinds("2 .n") == ["number", "operator", "name", "end_of_input"]
+    assert kinds("2.5+n") == ["number", "operator", "name", "end_of_input"]
+    assert kinds("(2).n")[:4] == ["punctuation", "number", "punctuation", "operator"]

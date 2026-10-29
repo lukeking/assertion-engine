@@ -8,6 +8,7 @@ from collections import Counter
 
 import pytest
 
+from assertion_engine.dsl.errors import ExpressionLocation, RuleSetError
 from assertion_engine.dsl.parser import BINDING_POWERS, parse
 from assertion_engine.dsl.syntax import (
     And,
@@ -364,3 +365,82 @@ def test_SC006_collector_names_each_production_once_per_construct(text, expected
     collector = []
     parse(text, collector=collector)
     assert Counter(collector) == expected
+
+
+# Parse depth limit (data-model.md): every operand parse but the rule body's
+# own opens one level, whatever opens it; level 101 is nesting_too_deep at the
+# token that opens it, before Python's recursion limit (1000) is near.
+
+DEPTH_LIMIT = 100
+
+
+def at(column, fragment):
+    return ExpressionLocation(1, column, column + len(fragment), fragment)
+
+
+def depth_error(text):
+    with pytest.raises(RuleSetError) as caught:
+        parse(text)
+    assert caught.value.diagnostic.code == "nesting_too_deep"
+    return caught.value.diagnostic.location
+
+
+def groups(depth):
+    return "(" * depth + "a" + ")" * depth
+
+
+def negations(depth):
+    return "-" * depth + "a"
+
+
+def calls(depth):
+    return "f(" * depth + "a" + ")" * depth
+
+
+def implications(depth):
+    # Right-associative: each right operand nests inside the previous one.
+    return " implies ".join(["a"] * (depth + 1))
+
+
+def conditionals(depth):
+    # Each else branch holds the next conditional; its condition is one deeper.
+    return "if a then b else " * depth + "c"
+
+
+NESTINGS = pytest.mark.parametrize(
+    ("nest", "opener"),
+    [
+        (groups, at(101, "(")),
+        (negations, at(101, "-")),
+        (calls, at(202, "(")),
+        (implications, at(1003, "implies")),
+        (conditionals, at(1701, "if")),
+    ],
+    ids=["groups", "negations", "calls", "implications", "conditionals"],
+)
+
+
+@NESTINGS
+def test_FR003_depth_100_parses_and_depth_101_is_nesting_too_deep(nest, opener):
+    parse(nest(DEPTH_LIMIT))
+    assert depth_error(nest(DEPTH_LIMIT + 1)) == opener
+
+
+@NESTINGS
+def test_FR003_nesting_far_past_the_limit_stops_at_level_101(nest, opener):
+    assert depth_error(nest(5000)) == opener
+
+
+def test_FR003_every_opener_shares_one_depth_counter():
+    parse("-(" * 50 + "a" + ")" * 50)
+    assert depth_error("-(" * 50 + "-a" + ")" * 50) == at(101, "-")
+
+
+def test_FR003_an_infix_operand_opens_a_level_too():
+    parse("(" * 99 + "a < b" + ")" * 99)
+    assert depth_error("(" * 100 + "a < b" + ")" * 100) == at(103, "<")
+
+
+def test_FR003_sibling_operands_do_not_add_up():
+    parse("f(" + groups(99) + ", " + groups(99) + ")")
+    parse(groups(99) + " and " + groups(98))

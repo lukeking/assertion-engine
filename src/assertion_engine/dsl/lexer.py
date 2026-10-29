@@ -4,6 +4,9 @@ Follows contracts/grammar.ebnf "Lexical notes". Whitespace (space, tab,
 newline) separates tokens and produces none; every other character is one
 column, and a newline starts the next line at column 1. The last token is
 always end_of_input, an empty span where the text ends.
+
+A number directly followed by a letter, "_" or "." is invalid_number, located
+over the whole run of name and number characters it starts (1e3, 2., 2.5.1).
 """
 
 import re
@@ -39,6 +42,8 @@ _TOKEN = re.compile(
     """,
     re.VERBOSE,
 )
+# What a well-formed number may not run into.
+_NUMBER_TAIL = re.compile(r"[A-Za-z0-9_.]+")
 
 
 @dataclass(frozen=True)
@@ -61,6 +66,11 @@ def tokenize(text: str) -> tuple[Token, ...]:
             raise RuleSetError(Diagnostic("invalid_character", message, location))
         lexeme, group = match.group(), match.lastgroup
         index = match.end()
+        if group == "number" and (tail := _NUMBER_TAIL.match(text, index)):
+            lexeme += tail.group()
+            location = ExpressionLocation(line, column, column + len(lexeme), lexeme)
+            message = f"{lexeme!r} is not a number: no exponent, digits around '.'"
+            raise RuleSetError(Diagnostic("invalid_number", message, location))
         if group == "whitespace":
             if "\n" in lexeme:
                 line += lexeme.count("\n")

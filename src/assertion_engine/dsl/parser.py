@@ -10,6 +10,14 @@ have binding power 0 and end the operand.
 Every parse also returns the operand's extent, which includes the parentheses
 around a grouped operand: a parent node's span covers them, the grouped
 node's own span does not (contracts/syntax-tree.md "Span").
+
+The first syntax error stops the parse and points at one token: the
+unexpected or reserved token, a chain's second comparison operator, the "("
+left unclosed, or the token that opens nesting level DEPTH_LIMIT + 1. Every
+operand parse but the rule body's own opens one level, so the limit bounds
+the recursion whatever nests (data-model.md "Parse depth limit"). At the end
+of input, and for an empty expression at column 1, the location is one column
+wide with an empty fragment.
 """
 
 from types import MappingProxyType
@@ -54,6 +62,7 @@ _INFIX_LEVELS = {
 }
 _RIGHT_ASSOCIATIVE = frozenset({"implication"})
 AXES = frozenset({"n", "e", "d"})
+DEPTH_LIMIT = 100
 
 type Position = tuple[int, int]
 
@@ -65,8 +74,14 @@ def parse(text: str, *, binding_powers=BINDING_POWERS, collector=None) -> Node:
     time the parser builds that production's construct, grouping included.
     """
     parser = _Parser(tokenize(text), binding_powers, collector)
+    if parser.peek().kind == "end_of_input":
+        location = ExpressionLocation(1, 1, 2, "")
+        message = "the expression is empty"
+        raise RuleSetError(Diagnostic("empty_expression", message, location))
     node, _, _ = parser.operand(0)
     token = parser.peek()
+    if token.kind == "reserved_word":
+        raise _unexpected(token)
     if token.kind != "end_of_input":
         message = f"unexpected {token.text!r} after a complete expression"
         raise _error("trailing_input", token, message)
@@ -79,6 +94,7 @@ class _Parser:
         self.index = 0
         self.powers = powers
         self.collector = collector
+        self.depth = -1  # the rule body's own operand opens no level
 
     def peek(self) -> Token:
         return self.tokens[self.index]
@@ -94,17 +110,41 @@ class _Parser:
             raise _unexpected(token)
         return token
 
+    def close(self, opening: Token) -> Token:
+        """The ")" for opening; input that ends first leaves opening unclosed."""
+        token = self.advance()
+        if token.kind == "end_of_input":
+            raise _error("unclosed_parenthesis", opening, "'(' is never closed")
+        if token.text != ")":
+            raise _unexpected(token)
+        return token
+
     def record(self, production: str):
         if self.collector is not None:
             self.collector.append(production)
 
     def operand(self, minimum: int) -> tuple[Node, Position, Position]:
-        """Parse one operand and every infix operator binding tighter than minimum."""
+        """Parse one operand and every infix operator binding tighter than minimum.
+
+        The token just consumed (a "(", prefix operator, separator or infix
+        operator) opens this operand's nesting level.
+        """
+        self.depth += 1
+        if self.depth > DEPTH_LIMIT:
+            message = f"nesting is deeper than {DEPTH_LIMIT} levels"
+            raise _error("nesting_too_deep", self.tokens[self.index - 1], message)
         node, start, end = self.prefix(self.advance(), minimum)
+        compared = False
         while True:
-            level = _INFIX_LEVELS.get(self.peek().text)
+            operator = self.peek()
+            level = _INFIX_LEVELS.get(operator.text)
             if level is None or self.powers[level] <= minimum:
+                self.depth -= 1
                 return node, start, end
+            if compared and level == "comparison":
+                message = "comparisons do not chain; join them with 'and'"
+                raise _error("chained_comparison", operator, message)
+            compared = level == "comparison"
             node, end = self.infix(self.advance(), level, node, start)
 
     def prefix(self, token: Token, minimum: int) -> tuple[Node, Position, Position]:
@@ -119,7 +159,7 @@ class _Parser:
             return Name(token.text, token.span), start, end
         if token.text == "(":
             node, _, _ = self.operand(0)
-            end = _end(self.expect(")"))
+            end = _end(self.close(token))
             self.record("grouping")
             return node, start, end
         if token.text == "-":
@@ -140,12 +180,12 @@ class _Parser:
         raise _unexpected(token)
 
     def call(self, function: Token) -> tuple[Node, Position, Position]:
-        self.expect("(")
+        opening = self.expect("(")
         arguments = [self.operand(0)[0]]
         while self.peek().text == ",":
             self.advance()
             arguments.append(self.operand(0)[0])
-        start, end = _start(function), _end(self.expect(")"))
+        start, end = _start(function), _end(self.close(opening))
         self.record("call")
         return Call(function.text, tuple(arguments), Span(*start, *end)), start, end
 
@@ -184,9 +224,13 @@ def _end(token: Token) -> Position:
 
 
 def _error(code: str, token: Token, message: str) -> RuleSetError:
+    """A diagnostic at token; end of input is the one column past the text."""
     span = token.span
+    end_column = span.end_column
+    if token.kind == "end_of_input":
+        end_column = span.start_column + 1
     location = ExpressionLocation(
-        span.start_line, span.start_column, span.end_column, token.text
+        span.start_line, span.start_column, end_column, token.text
     )
     return RuleSetError(Diagnostic(code, message, location))
 
@@ -194,4 +238,7 @@ def _error(code: str, token: Token, message: str) -> RuleSetError:
 def _unexpected(token: Token) -> RuleSetError:
     if token.kind == "end_of_input":
         return _error("unexpected_end", token, "expression ends too early")
+    if token.kind == "reserved_word":
+        message = f"{token.text!r} is reserved and not part of the M1 grammar"
+        return _error("reserved_word", token, message)
     return _error("unexpected_token", token, f"unexpected {token.text!r}")

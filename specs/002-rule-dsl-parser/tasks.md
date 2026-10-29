@@ -92,10 +92,10 @@
 - [X] T016 [P] [US2] 在 `tests/unit/dsl/test_checker.py` 撰寫：`contracts/ruleset.md`「Type and dimension rules」每一條至少一正一負；常值 `0` 取得夥伴的量綱、其他常值無因次；
   4 個內建衍生量的定義字串與單位等於 contract 表；`return_time_s` 推導為 `s`；`derived_unit_mismatch`、`derived_cycle`、`not_boolean_rule`、`unknown_name`、
   `arity_mismatch`（`norm(a, b)`）、`type_mismatch` 的 location 指向對應節點的 span；每個 `Name` 節點解析成 field、derived 或 parameter。
-- [ ] T017 [P] [US2] 在 `tests/unit/dsl/test_ruleset.py` 撰寫：只含非時間規則的有效小規則集可載入；TOML 語法錯誤回報 file location（`lineno`／`colno`）；
+- [-] T017 [P] [US2] 在 `tests/unit/dsl/test_ruleset.py` 撰寫：只含非時間規則的有效小規則集可載入；TOML 語法錯誤回報 file location（`lineno`／`colno`）；
   未知 key、缺 key、錯誤 `schema_version`、零條 rule、未知 category、不合法名稱 → `invalid_ruleset`；`name_conflict`、`unknown_unit`；
   兩個錯誤同時存在時回報 `data-model.md` 載入流程中較早的那一個；失敗時不回傳部分規則集。
-- [ ] T018 [US2] 建立 `tests/fixtures/invalid_rules.toml`（`data-model.md`「Regression suite files」格式）：`nonpositive_duration` 以外 21 個錯誤碼各至少 2 例，
+- [-] T018 [US2] 建立 `tests/fixtures/invalid_rules.toml`（`data-model.md`「Regression suite files」格式）：`nonpositive_duration` 以外 21 個錯誤碼各至少 2 例，
   每例記錄 code 與 `line`／`column` 或 `file_line`／`file_column`；在 `tests/contract/test_invalid_rules.py` 撰寫參數化測試（parameter ID 為錯誤碼），
   `expression` 例嵌入最小有效規則集後載入（SC-005）。
 - [ ] T019 [P] [US2] 在 `tests/integration/test_rules_cli.py` 撰寫：`check` 對只含基本規則的 `tmp_path` 規則集輸出 `ok: …`、exit 0；無效規則集在 stderr 輸出
@@ -108,10 +108,10 @@
 - [X] T021 [US2] 在 `src/assertion_engine/dsl/vocabulary.py` 實作 5 個欄位、`norm`／`hnorm`、4 個內建衍生量（DSL 定義字串與單位）。（depends on T020）
 - [X] T022 [US2] 在 `src/assertion_engine/dsl/checker.py` 實作名稱解析、參數個數、型別、量綱推導、常值 `0` 規則、衍生量依賴圖（循環與宣告單位）；
   location 取自節點 span；讓 T016 通過。（depends on T021、T012、T016）
-- [ ] T023 [US2] 在 `src/assertion_engine/dsl/lexer.py` 與 `parser.py` 補齊語法錯誤碼：`invalid_character`、`invalid_number`、`empty_expression`、`unexpected_token`、
+- [-] T023 [US2] 在 `src/assertion_engine/dsl/lexer.py` 與 `parser.py` 補齊語法錯誤碼：`invalid_character`、`invalid_number`、`empty_expression`、`unexpected_token`、
   `unexpected_end`、`unclosed_parenthesis`、`trailing_input`、`chained_comparison`、`reserved_word`、`invalid_axis`，以及 `data-model.md`「Parse depth limit」的
   `nesting_too_deep`（深度 101 在 Python 遞迴上限之前就拒絕），位置照 `data-model.md`。（depends on T018）
-- [ ] T024 [US2] 在 `src/assertion_engine/dsl/ruleset.py` 實作 `data-model.md` 的 9 步 fail-closed 載入流程（依檔案順序、第一個錯誤就停）；
+- [-] T024 [US2] 在 `src/assertion_engine/dsl/ruleset.py` 實作 `data-model.md` 的 9 步 fail-closed 載入流程（依檔案順序、第一個錯誤就停）；
   在 `src/assertion_engine/dsl/__init__.py` 匯出 `load_ruleset`、`parse_expression`、`Diagnostic`、`RuleSetError`；讓 T017、T018 通過。（depends on T022、T023、T017）
 - [ ] T025 [US2] 在 `src/assertion_engine/dsl/cli.py` 實作 `check` 與 `dump` 及診斷格式；在 `pyproject.toml` 加入 `assertion-rules = "assertion_engine.dsl.cli:main"`，
   驗證 `uv sync --locked` 仍成功；讓 T019 通過。（depends on T024、T019）

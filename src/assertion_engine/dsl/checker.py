@@ -4,11 +4,11 @@ Applies contracts/ruleset.md "Type and dimension rules" to syntax trees and
 returns contracts/syntax-tree.md "Checker annotations": each node's type and
 each Name node's resolution, keyed by node identity.
 
-check_derived checks the 4 built-in derived quantities (parsed here from
-vocabulary.BUILT_IN_DERIVED) and then the rule set's, in declaration order
-(data-model.md "Loading pipeline" step 6); check_rule checks one rule against
-the resulting Scope (step 8). The first error raises RuleSetError; nothing
-partial is returned.
+check_derived checks the 4 built-in derived quantities (parsed by the caller
+from vocabulary.BUILT_IN_DERIVED, loading pipeline step 4) and then the rule
+set's, in declaration order (data-model.md "Loading pipeline" step 6);
+check_rule checks one rule against the resulting Scope (step 8). The first
+error raises RuleSetError; nothing partial is returned.
 
 Order inside one tree: depth first, children left to right, and a node's own
 rule after all its children; a call resolves its function name, then infers
@@ -28,7 +28,6 @@ from dataclasses import dataclass
 from types import MappingProxyType
 
 from assertion_engine.dsl.errors import Diagnostic, ExpressionLocation, RuleSetError
-from assertion_engine.dsl.parser import parse
 from assertion_engine.dsl.syntax import (
     And,
     Arithmetic,
@@ -44,7 +43,7 @@ from assertion_engine.dsl.syntax import (
     Span,
 )
 from assertion_engine.dsl.units import Dimension, dimension_of
-from assertion_engine.dsl.vocabulary import BUILT_IN_DERIVED, FIELDS, FUNCTIONS
+from assertion_engine.dsl.vocabulary import FIELDS, FUNCTIONS
 
 
 @dataclass(frozen=True)
@@ -102,20 +101,18 @@ class Scope:
 
 
 def check_derived(
+    built_in: Mapping[str, tuple[str, str, Node]],
     derived: Mapping[str, tuple[str, str, Node]],
     parameters: Mapping[str, str],
 ) -> Scope:
     """Check the built-in and then the rule set's derived quantities.
 
-    derived maps name -> (unit, expression text, tree) in file order and
-    parameters maps name -> unit. The loader has already rejected name
-    conflicts and undeclarable units. A parameter is a scalar of its unit.
+    built_in and derived map name -> (unit, expression text, tree): the
+    vocabulary's definitions and the rule set's, in file order. parameters
+    maps name -> unit. The loader has already rejected name conflicts and
+    undeclarable units. A parameter is a scalar of its unit.
     """
-    declarations = {
-        name: (unit, definition, parse(definition))
-        for name, (unit, definition) in BUILT_IN_DERIVED.items()
-    }
-    declarations.update(derived)
+    declarations = {**built_in, **derived}
     values = dict(_FIELDS)
     for name, unit in parameters.items():
         values[name] = ("parameter", Type("scalar", dimension_of(unit)))

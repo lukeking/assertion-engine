@@ -57,13 +57,21 @@ PARAMETERS = {
 }
 
 
+def built_in():
+    """The built-in derived quantities, parsed as loading pipeline step 4 does."""
+    return {
+        name: (unit, text, parse(text))
+        for name, (unit, text) in BUILT_IN_DERIVED.items()
+    }
+
+
 def scope(derived=None, parameters=PARAMETERS):
     """Check derived = {name: (unit, text)} beside the built-in quantities."""
     declarations = {
         name: (unit, text, parse(text))
         for name, (unit, text) in (derived or {}).items()
     }
-    return check_derived(declarations, parameters)
+    return check_derived(built_in(), declarations, parameters)
 
 
 def check(text, derived=None):
@@ -118,7 +126,7 @@ def corpus_scope():
         name: (table["unit"], table["expression"], parse(table["expression"]))
         for name, table in document["derived"].items()
     }
-    return check_derived(derived, parameters)
+    return check_derived(built_in(), derived, parameters)
 
 
 # Vocabulary (contracts/ruleset.md "Built-in vocabulary").
