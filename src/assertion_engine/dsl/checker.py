@@ -11,8 +11,9 @@ the resulting Scope (step 8). The first error raises RuleSetError; nothing
 partial is returned.
 
 Order inside one tree: depth first, children left to right, and a node's own
-rule after all its children; a call's function name is resolved before its
-arguments, and its arity before their types. A derived quantity met by name
+rule after all its children; a call resolves its function name, then infers
+its arguments (their own errors first), then checks arity, then the argument
+kinds. A derived quantity met by name
 is checked on the spot, so its errors come before its dependent's; a name
 whose quantity is still being checked closes a cycle (derived_cycle there).
 

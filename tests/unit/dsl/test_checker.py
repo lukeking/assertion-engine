@@ -855,7 +855,7 @@ def test_FR010_unknown_name_in_a_derived_quantity_names_it():
 
 
 # First error wins: children left to right before their parent; a call's
-# function name before its arguments; arity before argument types.
+# function name, then its arguments' own errors, then arity, then argument kinds.
 
 
 @pytest.mark.parametrize(
@@ -875,6 +875,7 @@ def test_FR010_unknown_name_in_a_derived_quantity_names_it():
             at(1, "norm(battery_percent, limit_m)"),
         ),
         ("norm(batery) < limit_m", "unknown_name", at(6, "batery")),
+        ("norm(batery, limit_m) < limit_m", "unknown_name", at(6, "batery")),
     ],
     ids=[
         "left-first",
@@ -883,6 +884,7 @@ def test_FR010_unknown_name_in_a_derived_quantity_names_it():
         "function-name-first",
         "arity-before-type",
         "argument-names",
+        "arguments-before-arity",
     ],
 )
 def test_FR011_first_error_in_traversal_order_wins(text, code, location):
