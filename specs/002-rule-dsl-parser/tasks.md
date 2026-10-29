@@ -88,8 +88,8 @@
 
 ### Tests for User Story 2
 
-- [ ] T015 [P] [US2] 在 `tests/unit/dsl/test_units.py` 撰寫：6 個單位字串對應 `contracts/ruleset.md` 的指數三元組；乘除時指數相加減；未知單位被拒；推導出的量綱可格式化成標籤（如 `%/s`）。
-- [ ] T016 [P] [US2] 在 `tests/unit/dsl/test_checker.py` 撰寫：`contracts/ruleset.md`「Type and dimension rules」每一條至少一正一負；常值 `0` 取得夥伴的量綱、其他常值無因次；
+- [-] T015 [P] [US2] 在 `tests/unit/dsl/test_units.py` 撰寫：6 個單位字串對應 `contracts/ruleset.md` 的指數三元組；乘除時指數相加減；未知單位被拒；推導出的量綱可格式化成標籤（如 `%/s`）。
+- [-] T016 [P] [US2] 在 `tests/unit/dsl/test_checker.py` 撰寫：`contracts/ruleset.md`「Type and dimension rules」每一條至少一正一負；常值 `0` 取得夥伴的量綱、其他常值無因次；
   4 個內建衍生量的定義字串與單位等於 contract 表；`return_time_s` 推導為 `s`；`derived_unit_mismatch`、`derived_cycle`、`not_boolean_rule`、`unknown_name`、
   `arity_mismatch`（`norm(a, b)`）、`type_mismatch` 的 location 指向對應節點的 span；每個 `Name` 節點解析成 field、derived 或 parameter。
 - [ ] T017 [P] [US2] 在 `tests/unit/dsl/test_ruleset.py` 撰寫：只含非時間規則的有效小規則集可載入；TOML 語法錯誤回報 file location（`lineno`／`colno`）；
@@ -104,9 +104,9 @@
 
 ### Implementation for User Story 2
 
-- [ ] T020 [P] [US2] 在 `src/assertion_engine/dsl/units.py` 實作 `Dimension` 與單位表；讓 T015 通過。（depends on T015）
-- [ ] T021 [US2] 在 `src/assertion_engine/dsl/vocabulary.py` 實作 5 個欄位、`norm`／`hnorm`、4 個內建衍生量（DSL 定義字串與單位）。（depends on T020）
-- [ ] T022 [US2] 在 `src/assertion_engine/dsl/checker.py` 實作名稱解析、參數個數、型別、量綱推導、常值 `0` 規則、衍生量依賴圖（循環與宣告單位）；
+- [-] T020 [P] [US2] 在 `src/assertion_engine/dsl/units.py` 實作 `Dimension` 與單位表；讓 T015 通過。（depends on T015）
+- [-] T021 [US2] 在 `src/assertion_engine/dsl/vocabulary.py` 實作 5 個欄位、`norm`／`hnorm`、4 個內建衍生量（DSL 定義字串與單位）。（depends on T020）
+- [-] T022 [US2] 在 `src/assertion_engine/dsl/checker.py` 實作名稱解析、參數個數、型別、量綱推導、常值 `0` 規則、衍生量依賴圖（循環與宣告單位）；
   location 取自節點 span；讓 T016 通過。（depends on T021、T012、T016）
 - [ ] T023 [US2] 在 `src/assertion_engine/dsl/lexer.py` 與 `parser.py` 補齊語法錯誤碼：`invalid_character`、`invalid_number`、`empty_expression`、`unexpected_token`、
   `unexpected_end`、`unclosed_parenthesis`、`trailing_input`、`chained_comparison`、`reserved_word`、`invalid_axis`，以及 `data-model.md`「Parse depth limit」的

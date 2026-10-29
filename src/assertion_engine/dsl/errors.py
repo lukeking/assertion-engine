@@ -41,7 +41,8 @@ class ExpressionLocation:
     """Positions within one expression string.
 
     The lexer and parser see only the text and leave both owners unset; the
-    rule-set loader names the rule or derived quantity it was parsing.
+    checker and the rule-set loader name the rule or derived quantity they
+    were checking or parsing.
     """
 
     line: int

@@ -41,7 +41,8 @@ BASIC_RULES = (
 REACHED_TIER = BASIC_RULES
 
 # contracts/ruleset.md "Built-in vocabulary", built-in derived quantities table,
-# copied literally until the vocabulary module holds them.
+# copied literally and kept independent of vocabulary.py: expected inputs here
+# do not come from the implementation (test_checker.py pins vocabulary.py to it).
 BUILT_IN_DEFINITIONS = {
     "altitude_m": "-position_ned_m.d",
     "descent_speed_mps": "velocity_ned_mps.d",
