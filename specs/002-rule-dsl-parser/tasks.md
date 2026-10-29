@@ -76,7 +76,7 @@
   非時間構造的 prefix／infix handler、coverage collector；讓 T009（結構部分）與 T010 通過。（depends on T011、T009、T010）
 - [-] T013 [US1] T009 的結構比對全部通過後，以 parser＋`canonical_bytes` 產生 7 條基本規則的 `tests/fixtures/rule_trees/<短名>.json`，逐檔對照 `rule_shapes.py` 檢查後 commit；
   確認 T009 的 golden 檔名集合等於 7 條、bytes 比對與 3 次決定性都通過。（depends on T012）
-- [ ] T014 [US1] 建立 `specs/002-rule-dsl-parser/validation.md`，記錄 Gate 階（SC-001）的 runner 摘要、受測 commit、7 條規則清單與 RED→GREEN 紀錄。（depends on T013）
+- [-] T014 [US1] 建立 `specs/002-rule-dsl-parser/validation.md`，記錄 Gate 階（SC-001）的 runner 摘要、受測 commit、7 條規則清單與 RED→GREEN 紀錄。（depends on T013）
 
 **Checkpoint CP3**: 爬到 Gate「基本規則」；GAR-18 字面驗收「可解析基本規則（比較、邏輯運算）為語法樹」成立。
 
