@@ -26,12 +26,12 @@
 
 **Purpose**: 解除 `dsl` 的空套件限制、補上它自己的依賴邊界，並把 17 條語料寫成規則集資料。
 
-- [-] T001 修改 `tests/architecture/test_dependency_boundaries.py`：`RESERVED_PACKAGES` 移除 `"dsl"`；`FORBIDDEN_DEPENDENCIES` 新增 `"dsl": ("assertion_engine.evaluator", "assertion_engine.fuzzer", "assertion_engine.simulator", "assertion_engine.playback")`；
+- [X] T001 修改 `tests/architecture/test_dependency_boundaries.py`：`RESERVED_PACKAGES` 移除 `"dsl"`；`FORBIDDEN_DEPENDENCIES` 新增 `"dsl": ("assertion_engine.evaluator", "assertion_engine.fuzzer", "assertion_engine.simulator", "assertion_engine.playback")`；
   照既有的參數化寫法加入 `dsl/` 引用 evaluator 與 playback 的違規案例，確認既有「fuzzer 不得引用 dsl」案例仍在且通過（FR-016）。
-- [-] T002 在 `tests/contract/test_rule_corpus.py` 撰寫語料對照測試（只用 `tomllib`，不 import `assertion_engine.dsl`）：`rules/corpus.toml` 的 rule 短名集合等於
+- [X] T002 在 `tests/contract/test_rule_corpus.py` 撰寫語料對照測試（只用 `tomllib`，不 import `assertion_engine.dsl`）：`rules/corpus.toml` 的 rule 短名集合等於
   `specs/002-rule-dsl-parser/rule-corpus.md` 的 `### \`短名\`` 標題集合；類別數為 threshold 4、logic 3、temporal 6、trend 4；有 1 個 derived、27 個 parameters。
   先在檔案不存在時跑一次記錄 RED。
-- [-] T003 依 `specs/002-rule-dsl-parser/research.md`「17 條語料的寫法」與 `contracts/ruleset.md` 建立 `rules/corpus.toml`：`schema_version = "1.0.0"`、27 個 `[parameters.*]` 的單位、
+- [X] T003 依 `specs/002-rule-dsl-parser/research.md`「17 條語料的寫法」與 `contracts/ruleset.md` 建立 `rules/corpus.toml`：`schema_version = "1.0.0"`、27 個 `[parameters.*]` 的單位、
   `[derived.return_time_s]`、17 條 `[rules.*]` 的 category 與 expression（字面照 research，不改寫）；讓 T002 通過。（depends on T002）
 
 **Checkpoint CP1**: 架構邊界允許 `dsl` 有內容但禁止它引用其他元件；語料資料與白話語料的短名一致。尚未宣稱任何解析行為。
