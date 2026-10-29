@@ -16,8 +16,8 @@ $ARGUMENTS
 
 You **MUST** consider the user input before proceeding (if not empty).
 
-This entrypoint is for Codex. When running in Claude, use
-`.claude/skills/speckit-implement/SKILL.md` instead of executing the steps in this file.
+This entrypoint is for Codex. When running in Claude, use the user-level spec-kit
+`~/.agents/speckit/skills/speckit-implement/SKILL.md` instead of executing the steps in this file.
 
 ## Codex session scope
 
