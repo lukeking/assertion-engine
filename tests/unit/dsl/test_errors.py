@@ -82,14 +82,22 @@ def test_FR011_diagnostic_with_file_location():
     assert (diagnostic.location.file_line, diagnostic.location.file_column) == (4, 12)
 
 
-@pytest.mark.parametrize(
-    "owners",
-    [{}, {"rule": "battery-floor", "derived": "return_time_s"}],
-    ids=["neither", "both"],
-)
-def test_FR011_expression_location_names_exactly_one_owner(owners):
+def test_FR011_expression_location_names_at_most_one_owner():
     with pytest.raises(ValueError, match="rule or derived"):
-        ExpressionLocation(line=1, column=1, end_column=2, fragment="a", **owners)
+        ExpressionLocation(
+            line=1,
+            column=1,
+            end_column=2,
+            fragment="a",
+            rule="battery-floor",
+            derived="return_time_s",
+        )
+
+
+def test_FR011_standalone_expression_location_has_no_owner():
+    # parse_expression sees only the text; the rule-set loader names the owner.
+    location = ExpressionLocation(line=1, column=1, end_column=2, fragment="a")
+    assert (location.rule, location.derived) == (None, None)
 
 
 def test_FR011_diagnostic_code_outside_closed_list_is_rejected():

@@ -38,7 +38,11 @@ CODES = (
 
 @dataclass(frozen=True)
 class ExpressionLocation:
-    """Positions within the expression string of one rule or one derived quantity."""
+    """Positions within one expression string.
+
+    The lexer and parser see only the text and leave both owners unset; the
+    rule-set loader names the rule or derived quantity it was parsing.
+    """
 
     line: int
     column: int
@@ -48,8 +52,8 @@ class ExpressionLocation:
     derived: str | None = None
 
     def __post_init__(self):
-        if (self.rule is None) == (self.derived is None):
-            raise ValueError("expression location names exactly one rule or derived")
+        if self.rule is not None and self.derived is not None:
+            raise ValueError("expression location names at most one rule or derived")
 
 
 @dataclass(frozen=True)
