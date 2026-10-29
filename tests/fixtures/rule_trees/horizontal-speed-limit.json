@@ -1,0 +1,1 @@
+{"rule":"horizontal-speed-limit","tree":{"kind":"Compare","left":{"kind":"Name","name":"horizontal_speed_mps","span":[1,1,1,21]},"op":"<=","right":{"kind":"Name","name":"horizontal_speed_max_mps","span":[1,25,1,49]},"span":[1,1,1,49]}}

@@ -57,24 +57,24 @@
 
 ### Tests for User Story 1
 
-- [ ] T008 [P] [US1] 在 `tests/unit/dsl/test_lexer.py` 撰寫：整數與小數（`0.5`）、名稱、9 個關鍵字、`or`／`not` 保留字、`+ - * / ( ) , . < <= > >= == !=` 的 token kind 與 span；
+- [-] T008 [P] [US1] 在 `tests/unit/dsl/test_lexer.py` 撰寫：整數與小數（`0.5`）、名稱、10 個關鍵字（`contracts/grammar.ebnf`「Lexical notes」）、`or`／`not` 保留字、`+ - * / ( ) , . < <= > >= == !=` 的 token kind 與 span；
   多行運算式的行與欄；`n`／`e`／`d` 是一般名稱；空白不產生 token。
-- [ ] T009 [P] [US1] 建立 `tests/contract/rule_shapes.py`：以巢狀 tuple 手寫 7 條基本規則（`battery-floor`、`altitude-ceiling`、`horizontal-speed-limit`、`return-reserve`、
+- [-] T009 [P] [US1] 建立 `tests/contract/rule_shapes.py`：以巢狀 tuple 手寫 7 條基本規則（`battery-floor`、`altitude-ceiling`、`horizontal-speed-limit`、`return-reserve`、
   `geofence-cylinder`、`low-battery-stay-close`、`descent-speed-near-ground`）與 5 個衍生量定義（`contracts/ruleset.md` 的 4 個內建定義字串與 `return_time_s`）的預期結構，
   記法寫在 module docstring，結構由 `contracts/grammar.ebnf` 推導、不經 parser；在 `tests/contract/test_rule_trees.py` 撰寫 Gate 階測試：
   從 `rules/corpus.toml`（`tomllib`）取運算式，結構比對 `rule_shapes.py`；`tests/fixtures/rule_trees/*.json` 的檔名集合必須等於目前已到達階的規則集合
   （缺檔或多檔都紅燈，不以「檔案存在才比對」略過），並逐檔比對 bytes；每條解析 3 次 byte-identical（SC-001、SC-008）。
-- [ ] T010 [P] [US1] 在 `tests/unit/dsl/test_parser.py` 撰寫：`a - b - c` 左結合、`a implies b implies c` 右結合、`a and b and c` 左結合、`a + b * c`、`-x.d` 的
+- [-] T010 [P] [US1] 在 `tests/unit/dsl/test_parser.py` 撰寫：`a - b - c` 左結合、`a implies b implies c` 右結合、`a and b and c` 左結合、`a + b * c`、`-x.d` 的
   Negate 包 Component、`-a * b` 的 Negate 只包 `a`、`a < b and c < d implies e < f`（spec US1 情境 2：`and` 比 `implies` 先結合）、
   `if c then a else b implies d` 的 else 吞下 `implies`、加括號改變樹、比較右側的條件值需要括號——8 個層級的每一組相鄰對至少一例（供 T039 咬合檢查）；Compare／Arithmetic／Negate／Component／Call 的 span
   逐一手寫驗證，括號不計入 span；coverage collector 對 `(a + b) * c` 記下 grouping、additive、multiplicative、name。
 
 ### Implementation for User Story 1
 
-- [ ] T011 [US1] 在 `src/assertion_engine/dsl/lexer.py` 實作 ASCII 掃描器與帶 span 的 token；讓 T008 通過。（depends on T006、T007、T008）
-- [ ] T012 [US1] 在 `src/assertion_engine/dsl/parser.py` 實作 Pratt parser：`data-model.md` 的 8 列 `BINDING_POWERS` 表（可由參數注入，供 T039 使用）、
+- [-] T011 [US1] 在 `src/assertion_engine/dsl/lexer.py` 實作 ASCII 掃描器與帶 span 的 token；讓 T008 通過。（depends on T006、T007、T008）
+- [-] T012 [US1] 在 `src/assertion_engine/dsl/parser.py` 實作 Pratt parser：`data-model.md` 的 8 列 `BINDING_POWERS` 表（可由參數注入，供 T039 使用）、
   非時間構造的 prefix／infix handler、coverage collector；讓 T009（結構部分）與 T010 通過。（depends on T011、T009、T010）
-- [ ] T013 [US1] T009 的結構比對全部通過後，以 parser＋`canonical_bytes` 產生 7 條基本規則的 `tests/fixtures/rule_trees/<短名>.json`，逐檔對照 `rule_shapes.py` 檢查後 commit；
+- [-] T013 [US1] T009 的結構比對全部通過後，以 parser＋`canonical_bytes` 產生 7 條基本規則的 `tests/fixtures/rule_trees/<短名>.json`，逐檔對照 `rule_shapes.py` 檢查後 commit；
   確認 T009 的 golden 檔名集合等於 7 條、bytes 比對與 3 次決定性都通過。（depends on T012）
 - [ ] T014 [US1] 建立 `specs/002-rule-dsl-parser/validation.md`，記錄 Gate 階（SC-001）的 runner 摘要、受測 commit、7 條規則清單與 RED→GREEN 紀錄。（depends on T013）
 
