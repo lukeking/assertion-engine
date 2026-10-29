@@ -86,10 +86,14 @@ level sequence of this table, as implemented in `parser.py`, with the level list
 
 `then`, `else`, `,`, `)` and end of input have binding power 0: they end the current operand.
 
-**Parse depth limit**: the parser counts nested operand parses (each parenthesized group, prefix operand,
-call or temporal argument opens one level) and rejects depth 101 with `nesting_too_deep` before Python's
-recursion limit can be reached. E1: CPython 3.14.4 `sys.getrecursionlimit()` is 1000. E3: 100 levels is far
-above the corpus (its deepest rule nests a handful of levels) and leaves several Python frames per level.
+**Parse depth limit**: the parser counts nested operand parses — every operand below the rule body opens one
+level: a parenthesized group, a prefix operand, a call or temporal argument, a conditional's branch and an infix
+operator's right operand — and rejects depth 101 with `nesting_too_deep` before Python's recursion limit can be
+reached. So 100 parentheses around `a` are accepted and 100 around `a < b` are not. E1 (2026-10-29, CPython
+3.14.4): counting only groups, prefix operands and arguments does not keep that promise — an `implies` chain of
+600 operands raises `RecursionError` with no counted level, and so do 100 groups each holding
+`a and b < c + d * (…)` even when `implies` levels are counted too. E1: `sys.getrecursionlimit()` is 1000.
+E3: 100 levels is far above the corpus (its deepest rule nests a handful of levels).
 
 ## Production coverage
 

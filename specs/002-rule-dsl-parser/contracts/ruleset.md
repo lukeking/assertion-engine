@@ -104,5 +104,8 @@ Temporal keywords (syntax only in M1; meaning is M2/M3's):
 
 Fields: `code`, `message`, `location`. `location` is either
 `{"rule": <short-name> | "derived": <name>, "line", "column", "end_column", "fragment"}` for expression
-errors (positions within that expression string) or `{"file_line", "file_column"}` for TOML syntax errors.
+errors (positions within that expression string) or `{"file_line", "file_column"}` for errors in the file
+itself: a TOML syntax error at the decoder's position (TOML nested too deep to decode at 1:1); a shape, name or
+unit error (data-model.md loading steps 2–3) at the first non-blank character of the line that defines the
+offending key — a missing key at its table's line, a missing top-level key at 1:1.
 The closed list of codes is in data-model.md.

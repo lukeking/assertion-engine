@@ -126,5 +126,6 @@ slope          = "slope" , "(" , expression , "," , expression , ")" ;
    - Only ASCII is accepted; any other character is error invalid_character.
    - A number immediately followed by a letter or "." without a digit (e.g. "1e3", "2.") is
      error invalid_number. There is no leading "+" and no exponent form.
-   - Nesting deeper than 100 operand levels (parentheses, prefix "-", call and temporal
-     arguments) is error nesting_too_deep (data-model.md "Parse depth limit"). *)
+   - Nesting deeper than 100 operand levels (each parenthesized group, prefix "-", call or
+     temporal argument, conditional branch and infix right operand opens one) is error
+     nesting_too_deep (data-model.md "Parse depth limit"). *)
