@@ -83,3 +83,47 @@ RED→GREEN（executor 在 stub 上取得，main 重跑 GREEN）：
 
 CP3 比較運算子掃描留下的 `_unexpected` 存活突變（`==` 改 `!=`），在 `79f7cf8` 上讓 13 條測試失敗，已由
 T023 的錯誤路徑測試抓到。
+
+## 時序規則與全語料（SC-002～SC-004）— CP6
+
+受測 commit：時間保留字的語法與型別 `e12d043`；全語料的結構、golden 與 CLI
+`b07f572024687dda2f29874f73878c4cbb384a33`。
+
+三階（main 在 `b07f572` 重跑 `tests/contract/test_rule_trees.py`）：
+
+| 階 | 規則數 | 測試 | runner 摘要 |
+|---|---:|---|---|
+| 基本規則（SC-001） | 7 | 成員、結構、衍生量結構、battery-floor bytes、golden 檔名集合與 17 份 bytes | `-k SC001` → `33 passed` |
+| 時序規則（SC-002） | 13 | 成員（threshold＋logic＋temporal 類別）、13 條結構 | `-k SC002` → `14 passed` |
+| 全語料（SC-003） | 17 | 成員（全部語料規則）、每條規則都有結構、17 條結構 | `-k SC003` → `19 passed` |
+| 決定性（SC-008） | 17 | 每條解析 3 次 byte-identical | `-k SC008` → `17 passed` |
+
+SC-004 已達成：M1 完成於頂階「全語料」，17 條語料規則都解析成與手寫結構一致的語法樹，golden 檔名集合等於全部 17 條。
+`uv run assertion-rules check --ruleset rules/corpus.toml` → `ok: 17 rules, 1 derived, 27 parameters`，exit 0。
+
+時序與趨勢 10 條的手寫結構由 grammar.ebnf 推導，第一次對 parser 跑就全部一致，沒有需要裁定的分歧。
+新 golden 照 Gate 階的方式產生（見上），不手改；main 以字串切片核對 battery-runout-forecast、telemetry-heartbeat、
+battery-tier-low 的 span（`Negate` 含負號、分組括號不計、跨行的 `Implies` 為 `[1,1,2,67]`）。
+
+`tests/fixtures/invalid_rules.toml` 共 61 例，`errors.CODES` 的 22 碼各至少 2 例（`test_invalid_rules.py` 現在要求
+集合相等，`170 passed`）；相對 CP4 只多了 `nonpositive_duration` 4 例，其餘 21 碼例數同上表。
+
+RED→GREEN（executor 取得，main 重跑 GREEN）：
+
+- 時間保留字：HEAD 上的新測試 `82 failed, 357 passed`（參數個數的案例錯誤碼相同但欄位不同，例如 `prev(a, b)` 在
+  第 1 欄就因 `prev` 被拒）；parser 完成、checker 未動時 `46 failed, 393 passed`，全部是 `NotImplementedError`
+  → 全套 1130。
+- 全語料：新測試就位、golden 未產生時 `tests/contract/test_rule_trees.py` `11 failed, 72 passed`（檔名集合缺的
+  正好是 10 條，另 10 例 `FileNotFoundError`）；兩個故意寫錯的結構（held_for 參數對調、`+`／`*` 換層）
+  `3 failed` → 全套 1184。CLI 的整份語料案例第一次就通過（上一段已讓語料可載入），咬合由「拿掉語料的
+  `lookahead_s` 參數」確認：該案例 exit 1、`unknown_name`。
+- main 在 `b07f572`：全套 `1184 passed`；Ruff `102 files already formatted`、`All checks passed!`。
+
+duration 的檢查順序（契約未寫明，`e12d043` 的 commit 與 checker docstring 記錄）：值的種類 → duration 為 scalar →
+常值的正負 → duration 為 `s`。正負排在量綱前，T032「負數為 `nonpositive_duration`」才會觸發：`0`、`0.0`、`-5`、`-0`
+是 `nonpositive_duration`，`5` 是 `dimension_mismatch`，`-limit_s` 不是常值、放行。
+
+語料測不到的部分：把 `implies` 改成左結合時，三階與 golden 全部仍通過——每條語料規則至多一個 `implies`，
+單一 `implies` 左右結合建出同一棵樹。這由 `tests/unit/dsl/test_parser.py` 的 `test_FR004_implies_is_right_associative`
+擋（executor 的突變只讓它與兩個深度案例失敗）。T039 對調的是相鄰層級的優先序，不是結合方向，所以這一點
+目前只有這條單元測試在守。

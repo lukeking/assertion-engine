@@ -161,7 +161,7 @@
 - [X] T035 [US3] 在 `src/assertion_engine/dsl/checker.py` 實作時間保留字的型別與 duration 檢查；讓 T032、T033 通過。（depends on T034、T032、T033）
 - [-] T036 [US3] T030 的結構比對通過後，產生其餘 10 條規則的 golden 並逐檔對照 `rule_shapes.py` 後 commit，T009 的 golden 檔名集合改為必須等於全部 17 條；在 `tests/integration/test_rules_cli.py` 加上
   `check --ruleset rules/corpus.toml` 的 `ok: 17 rules, 1 derived, 27 parameters` 案例。（depends on T035）
-- [ ] T037 [US3] 在 `specs/002-rule-dsl-parser/validation.md` 記錄三階（7／13／17）的結果、22 個錯誤碼案例數與 runner 摘要；註明 SC-004（頂階）已達成。（depends on T036）
+- [-] T037 [US3] 在 `specs/002-rule-dsl-parser/validation.md` 記錄三階（7／13／17）的結果、22 個錯誤碼案例數與 runner 摘要；註明 SC-004（頂階）已達成。（depends on T036）
 
 **Checkpoint CP6**: 爬到頂階「全語料」；M1 的解析範圍完成。
 
