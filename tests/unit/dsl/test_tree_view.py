@@ -64,6 +64,24 @@ def test_FR014_parent_x_is_the_mean_of_its_children_and_depth_is_y():
     }
 
 
+def test_FR014_parent_x_is_the_mean_of_every_child_not_of_the_outer_two():
+    # f(a + b, c, d, e): children at 0.5, 2, 3, 4 average 2.375; the first and
+    # last alone would put the call at 2.25.
+    a, b = Name("a", at(3, 4)), Name("b", at(7, 8))
+    total = Arithmetic("+", a, b, at(3, 8))
+    c, d, e = Name("c", at(10, 11)), Name("d", at(13, 14)), Name("e", at(16, 17))
+    call = Call("f", (total, c, d, e), at(1, 18))
+    assert layout(call) == {
+        id(call): (2.375, 0),
+        id(total): (0.5, 1),
+        id(a): (0.0, 2),
+        id(b): (1.0, 2),
+        id(c): (2.0, 1),
+        id(d): (3.0, 1),
+        id(e): (4.0, 1),
+    }
+
+
 def test_FR014_leaves_follow_source_order_not_field_order():
     # Hand-built: the field listed first covers the later fragment of "a - b".
     a, b = Name("a", at(1, 2)), Name("b", at(5, 6))
