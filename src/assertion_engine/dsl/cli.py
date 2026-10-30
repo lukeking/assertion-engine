@@ -1,8 +1,10 @@
-"""The assertion-rules command: check and dump a rule set (contracts/cli.md).
+"""The assertion-rules command: check a rule set, dump a rule's syntax tree or
+draw it as a PNG (contracts/cli.md).
 
 Every command reads the file and loads the whole rule set first, so an invalid
 rule set prints its one diagnostic and exits 1 before a command does anything
-else. Bad arguments, an unreadable file and an unknown rule exit 2.
+else. Bad arguments, an unreadable file, an unknown rule, an existing output
+and an output that cannot be written (its directory missing, say) exit 2.
 """
 
 import argparse
@@ -29,6 +31,12 @@ def main(argv=None) -> int:
     )
     dump.add_argument("--ruleset", required=True)
     dump.add_argument("--rule", required=True)
+    tree = commands.add_parser(
+        "tree", help="draw a rule's checked syntax tree as a PNG", allow_abbrev=False
+    )
+    tree.add_argument("--ruleset", required=True)
+    tree.add_argument("--rule", required=True)
+    tree.add_argument("--output", required=True)
     try:
         args = parser.parse_args(argv)
     except SystemExit as error:
@@ -51,10 +59,22 @@ def main(argv=None) -> int:
     if args.rule not in ruleset.rules:
         print(f"unknown rule: {args.rule}", file=sys.stderr)
         return 2
-    tree = ruleset.rules[args.rule].annotations.tree
-    sys.stdout.buffer.write(
-        canonical_bytes({"rule": args.rule, "tree": to_document(tree)})
-    )
+    rule = ruleset.rules[args.rule]
+    if args.command == "dump":
+        document = {"rule": args.rule, "tree": to_document(rule.annotations.tree)}
+        sys.stdout.buffer.write(canonical_bytes(document))
+        return 0
+    # Imported here: Matplotlib takes longer to import than check or dump run.
+    from assertion_engine.dsl.tree_view import render
+
+    try:
+        render(rule.expression, rule.annotations, Path(args.output))
+    except FileExistsError:
+        print(f"output exists: {args.output}", file=sys.stderr)
+        return 2
+    except OSError as error:
+        print(f"{args.output}: cannot write: {error.strerror}", file=sys.stderr)
+        return 2
     return 0
 
 

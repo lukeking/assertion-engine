@@ -18,6 +18,7 @@ import pytest
 REPO_ROOT = Path(__file__).resolve().parents[2]
 GOLDEN_DIR = REPO_ROOT / "tests" / "fixtures" / "rule_trees"
 EXECUTABLE = Path(sys.executable).parent / "assertion-rules"
+PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
 
 BASIC = (
     'schema_version = "1.0.0"',
@@ -232,8 +233,12 @@ def test_check_counts_only_the_rule_sets_own_derived(tmp_path):
 
 @pytest.mark.parametrize(
     "command",
-    [("check",), ("dump", "--rule", "no-such-rule")],
-    ids=["check", "dump"],
+    [
+        ("check",),
+        ("dump", "--rule", "no-such-rule"),
+        ("tree", "--rule", "no-such-rule", "--output", "out.png"),
+    ],
+    ids=["check", "dump", "tree"],
 )
 @pytest.mark.parametrize(
     ("lines", "given", "expected"),
@@ -243,12 +248,13 @@ def test_check_counts_only_the_rule_sets_own_derived(tmp_path):
 def test_invalid_rule_set_prints_one_diagnostic(
     tmp_path, command, lines, given, expected
 ):
-    # dump names an unknown rule: loading the whole rule set comes first.
+    # dump and tree name an unknown rule: loading the whole rule set comes first.
     write(tmp_path, "bad.toml", lines)
     result = run(tmp_path, command[0], "--ruleset", given, *command[1:])
     assert result.returncode == 1
     assert result.stdout == ""
     assert result.stderr == expected
+    assert [path.name for path in tmp_path.iterdir()] == ["bad.toml"]
 
 
 def test_dump_writes_the_golden_bytes(tmp_path):
@@ -275,6 +281,69 @@ def test_dump_rejects_an_unknown_rule(tmp_path):
     assert result.stderr == "unknown rule: no-such-rule\n"
 
 
+def tree(tmp_path: Path, rule: str, output: str):
+    return run(
+        tmp_path,
+        "tree",
+        "--ruleset",
+        "basic.toml",
+        "--rule",
+        rule,
+        "--output",
+        output,
+    )
+
+
+def test_tree_writes_a_png(tmp_path):
+    write(tmp_path, "basic.toml", BASIC)
+    result = tree(tmp_path, "descent-speed-near-ground", "descent.png")
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == ""
+    assert result.stderr == ""
+    assert (tmp_path / "descent.png").read_bytes().startswith(PNG_SIGNATURE)
+    # The staging file was linked into place and removed, not left beside it.
+    assert sorted(path.name for path in tmp_path.iterdir()) == [
+        "basic.toml",
+        "descent.png",
+    ]
+
+
+# Exit 2 is also argparse's code for an unknown command: each case below checks
+# its own stderr line and the files left, so a missing tree command fails it.
+def test_tree_never_overwrites_an_existing_output(tmp_path):
+    write(tmp_path, "basic.toml", BASIC)
+    (tmp_path / "battery-floor.png").write_bytes(b"not mine")
+    result = tree(tmp_path, "battery-floor", "battery-floor.png")
+    assert result.returncode == 2
+    assert result.stdout == ""
+    assert result.stderr == "output exists: battery-floor.png\n"
+    assert (tmp_path / "battery-floor.png").read_bytes() == b"not mine"
+    assert sorted(path.name for path in tmp_path.iterdir()) == [
+        "basic.toml",
+        "battery-floor.png",
+    ]
+
+
+def test_tree_rejects_an_unknown_rule(tmp_path):
+    write(tmp_path, "basic.toml", BASIC)
+    result = tree(tmp_path, "no-such-rule", "out.png")
+    assert result.returncode == 2
+    assert result.stdout == ""
+    assert result.stderr == "unknown rule: no-such-rule\n"
+    assert [path.name for path in tmp_path.iterdir()] == ["basic.toml"]
+
+
+def test_tree_output_directory_must_exist(tmp_path):
+    write(tmp_path, "basic.toml", BASIC)
+    result = tree(tmp_path, "battery-floor", "missing/battery-floor.png")
+    assert result.returncode == 2
+    assert result.stdout == ""
+    assert result.stderr == (
+        f"missing/battery-floor.png: cannot write: {os.strerror(errno.ENOENT)}\n"
+    )
+    assert [path.name for path in tmp_path.iterdir()] == ["basic.toml"]
+
+
 # Options are spelled out: an abbreviation such as --rule for --ruleset is unknown.
 @pytest.mark.parametrize(
     "arguments",
@@ -285,6 +354,16 @@ def test_dump_rejects_an_unknown_rule(tmp_path):
         ("dump", "--ruleset", "basic.toml"),
         ("dump", "--rule", "battery-floor"),
         ("dump", "--rules", "basic.toml", "--rule", "battery-floor"),
+        ("tree", "--ruleset", "basic.toml", "--rule", "battery-floor"),
+        (
+            "tree",
+            "--ruleset",
+            "basic.toml",
+            "--rule",
+            "battery-floor",
+            "--out",
+            "out.png",
+        ),
     ],
     ids=[
         "no-command",
@@ -293,6 +372,8 @@ def test_dump_rejects_an_unknown_rule(tmp_path):
         "dump-without-rule",
         "dump-without-ruleset",
         "dump-abbreviated-ruleset",
+        "tree-without-output",
+        "tree-abbreviated-output",
     ],
 )
 def test_bad_arguments_are_a_usage_error(tmp_path, arguments):

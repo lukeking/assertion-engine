@@ -127,13 +127,13 @@
 
 ### Tests for User Story 4（第一部分）
 
-- [ ] T027 [P] [US4] 在 `tests/unit/dsl/test_tree_view.py` 撰寫：手工小樹的版面（葉節點依原文順序由左到右、父節點 x 為子節點平均、深度決定 y）；
+- [-] T027 [P] [US4] 在 `tests/unit/dsl/test_tree_view.py` 撰寫：手工小樹的版面（葉節點依原文順序由左到右、父節點 x 為子節點平均、深度決定 y）；
   標籤含節點種類、原文片段、型別，`Name` 節點另含解析類別（field／derived／parameter）；以 Agg 寫入 `tmp_path` 的 PNG 非空；輸出已存在時拒絕且不改寫；繪製失敗時不留下部分檔案。
 
 ### Implementation for User Story 4（第一部分）
 
-- [ ] T028 [US4] 在 `src/assertion_engine/dsl/tree_view.py` 實作版面與 Matplotlib Agg 繪製（暫存檔＋rename、拒絕覆寫）；讓 T027 通過。（depends on T027、CP4）
-- [ ] T029 [US4] 在 `src/assertion_engine/dsl/cli.py` 加上 `tree` 子命令，在 `tests/integration/test_rules_cli.py` 加上 `tree` 的成功、輸出已存在（exit 2）與未知 rule 案例；
+- [-] T028 [US4] 在 `src/assertion_engine/dsl/tree_view.py` 實作版面與 Matplotlib Agg 繪製（暫存檔＋rename、拒絕覆寫）；讓 T027 通過。（depends on T027、CP4）
+- [-] T029 [US4] 在 `src/assertion_engine/dsl/cli.py` 加上 `tree` 子命令，在 `tests/integration/test_rules_cli.py` 加上 `tree` 的成功、輸出已存在（exit 2）與未知 rule 案例；
   此時時間保留字還不能解析、整份 `rules/corpus.toml` 載入不了，所以把 7 條基本規則與衍生量放進 `mktemp -d` 的臨時規則集畫圖，主代理先檢視，
   再讓 user 先看（早期回饋，不算 SC-009 簽核）。（depends on T028）
 
