@@ -147,7 +147,7 @@
 
 ### Tests for User Story 3
 
-- [-] T030 [US3] 在 `tests/contract/rule_shapes.py` 補上 6 條時序與 4 條趨勢規則的手寫結構；在 `tests/contract/test_rule_trees.py` 加上「時序規則」（13 條）與「全語料」（17 條）
+- [X] T030 [US3] 在 `tests/contract/rule_shapes.py` 補上 6 條時序與 4 條趨勢規則的手寫結構；在 `tests/contract/test_rule_trees.py` 加上「時序規則」（13 條）與「全語料」（17 條）
   兩階的測試（SC-002、SC-003）。（depends on CP5；與 T009 同檔，序列化）
 - [X] T031 [P] [US3] 在 `tests/unit/dsl/test_parser.py` 補上：5 個時間保留字各自建出 `Previous`／`Ago`／`HeldFor`／`Within`／`Slope`，`HeldFor` 與 `Within` 是不同種類（US3 情境 2）；
   `prev(a, b)`、`slope(x)` 這類參數個數不合文法的寫法為 `unexpected_token`；時間節點的 span。
@@ -159,9 +159,9 @@
 
 - [X] T034 [US3] 在 `src/assertion_engine/dsl/parser.py` 實作 previous、ago、held_for、within、slope 五條產生式與 coverage 記錄；讓 T031 通過。（depends on T030、T031）
 - [X] T035 [US3] 在 `src/assertion_engine/dsl/checker.py` 實作時間保留字的型別與 duration 檢查；讓 T032、T033 通過。（depends on T034、T032、T033）
-- [-] T036 [US3] T030 的結構比對通過後，產生其餘 10 條規則的 golden 並逐檔對照 `rule_shapes.py` 後 commit，T009 的 golden 檔名集合改為必須等於全部 17 條；在 `tests/integration/test_rules_cli.py` 加上
+- [X] T036 [US3] T030 的結構比對通過後，產生其餘 10 條規則的 golden 並逐檔對照 `rule_shapes.py` 後 commit，T009 的 golden 檔名集合改為必須等於全部 17 條；在 `tests/integration/test_rules_cli.py` 加上
   `check --ruleset rules/corpus.toml` 的 `ok: 17 rules, 1 derived, 27 parameters` 案例。（depends on T035）
-- [-] T037 [US3] 在 `specs/002-rule-dsl-parser/validation.md` 記錄三階（7／13／17）的結果、22 個錯誤碼案例數與 runner 摘要；註明 SC-004（頂階）已達成。（depends on T036）
+- [X] T037 [US3] 在 `specs/002-rule-dsl-parser/validation.md` 記錄三階（7／13／17）的結果、22 個錯誤碼案例數與 runner 摘要；註明 SC-004（頂階）已達成。（depends on T036）
 
 **Checkpoint CP6**: 爬到頂階「全語料」；M1 的解析範圍完成。
 
