@@ -4,7 +4,7 @@ Rule sets are written line by line into tmp_path, so expected file locations
 can be counted by hand and expected expression locations counted in the
 expression string. BASIC copies the 7 threshold and logic rules of
 rules/corpus.toml (Gate 「基本規則」) and the declarations they need; the corpus
-file itself cannot load before the temporal keywords exist.
+file itself is only read, in place, by the check of the whole corpus.
 """
 
 import errno
@@ -16,6 +16,7 @@ from pathlib import Path
 import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
+CORPUS = REPO_ROOT / "rules" / "corpus.toml"
 GOLDEN_DIR = REPO_ROOT / "tests" / "fixtures" / "rule_trees"
 EXECUTABLE = Path(sys.executable).parent / "assertion-rules"
 PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
@@ -220,6 +221,14 @@ def test_check_accepts_the_basic_rule_set(tmp_path):
     result = run(tmp_path, "check", "--ruleset", "basic.toml")
     assert result.returncode == 0, result.stderr
     assert result.stdout == "ok: 7 rules, 1 derived, 14 parameters\n"
+    assert result.stderr == ""
+
+
+def test_check_accepts_the_whole_corpus(tmp_path):
+    # SC-004: all 17 corpus rules load, temporal and trend rules included.
+    result = run(tmp_path, "check", "--ruleset", str(CORPUS))
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == "ok: 17 rules, 1 derived, 27 parameters\n"
     assert result.stderr == ""
 
 

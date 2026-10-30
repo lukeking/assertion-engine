@@ -1,4 +1,4 @@
-"""SC-001/SC-008: corpus trees match hand-written shapes and golden bytes."""
+"""SC-001–SC-003/SC-008: corpus trees match hand-written shapes and golden bytes."""
 
 import tomllib
 from pathlib import Path
@@ -8,16 +8,21 @@ import pytest
 from assertion_engine.artifacts import canonical_bytes
 from assertion_engine.dsl.parser import parse
 from assertion_engine.dsl.syntax import (
+    Ago,
     And,
     Arithmetic,
     Call,
     Compare,
     Component,
     Conditional,
+    HeldFor,
     Implies,
     Name,
     Negate,
     Number,
+    Previous,
+    Slope,
+    Within,
     to_document,
 )
 from tests.contract.rule_shapes import DERIVED_SHAPES, RULE_SHAPES
@@ -36,9 +41,25 @@ BASIC_RULES = (
     "low-battery-stay-close",
     "descent-speed-near-ground",
 )
-# The highest tier reached so far: exactly its rules have golden files.
-# Raise it here when a later tier is reached; 「全語料」 is all 17 rules.
-REACHED_TIER = BASIC_RULES
+# Tier 「時序規則」 (spec SC-002): the basic rules and the temporal corpus rules.
+TEMPORAL_TIER = BASIC_RULES + (
+    "telemetry-heartbeat",
+    "monotonic-sequence",
+    "battery-tier-low",
+    "battery-tier-critical",
+    "battery-tier-emergency",
+    "no-sudden-jump",
+)
+# Tier 「全語料」 (spec SC-003): every corpus rule, the trend rules included.
+FULL_CORPUS_TIER = TEMPORAL_TIER + (
+    "battery-drain-rate",
+    "battery-runout-forecast",
+    "altitude-trend-ceiling",
+    "geofence-forecast",
+)
+# The highest tier reached: exactly its rules have golden files. 「全語料」 is
+# the top tier, and M1 is complete only there (spec SC-004).
+REACHED_TIER = FULL_CORPUS_TIER
 
 # contracts/ruleset.md "Built-in vocabulary", built-in derived quantities table,
 # copied literally and kept independent of vocabulary.py: expected inputs here
@@ -77,6 +98,16 @@ def shape(node):
             return (".", shape(target), axis)
         case Call(function=function, arguments=arguments):
             return ("call", function, *(shape(argument) for argument in arguments))
+        case Previous(value=value):
+            return ("prev", shape(value))
+        case Ago(value=value, duration=duration):
+            return ("ago", shape(value), shape(duration))
+        case HeldFor(condition=condition, duration=duration):
+            return ("held_for", shape(condition), shape(duration))
+        case Within(condition=condition, duration=duration):
+            return ("within", shape(condition), shape(duration))
+        case Slope(value=value, window=window):
+            return ("slope", shape(value), shape(window))
     raise TypeError(f"no shape notation for {node!r}")
 
 
@@ -112,6 +143,35 @@ def test_SC001_basic_tier_is_the_threshold_and_logic_rules():
 
 @pytest.mark.parametrize("short_name", BASIC_RULES)
 def test_SC001_basic_rule_matches_hand_written_shape(short_name):
+    assert shape(parse(rule_expression(short_name))) == RULE_SHAPES[short_name]
+
+
+def test_SC002_temporal_tier_adds_the_temporal_rules():
+    rules = load_corpus()["rules"]
+    assert len(TEMPORAL_TIER) == 13
+    assert set(TEMPORAL_TIER) == {
+        name
+        for name, rule in rules.items()
+        if rule["category"] in ("threshold", "logic", "temporal")
+    }
+
+
+@pytest.mark.parametrize("short_name", TEMPORAL_TIER)
+def test_SC002_temporal_tier_rule_matches_hand_written_shape(short_name):
+    assert shape(parse(rule_expression(short_name))) == RULE_SHAPES[short_name]
+
+
+def test_SC003_full_corpus_tier_is_every_corpus_rule():
+    assert len(FULL_CORPUS_TIER) == 17
+    assert set(FULL_CORPUS_TIER) == set(load_corpus()["rules"])
+
+
+def test_SC003_rule_shapes_cover_every_corpus_rule():
+    assert set(RULE_SHAPES) == set(FULL_CORPUS_TIER)
+
+
+@pytest.mark.parametrize("short_name", FULL_CORPUS_TIER)
+def test_SC003_full_corpus_rule_matches_hand_written_shape(short_name):
     assert shape(parse(rule_expression(short_name))) == RULE_SHAPES[short_name]
 
 

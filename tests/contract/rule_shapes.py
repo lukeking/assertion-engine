@@ -16,8 +16,11 @@ Notation, one form per node kind (contracts/syntax-tree.md "Node kinds"):
 - Negate: ("neg", operand).
 - Component: (".", target, axis), axis one of "n" "e" "d".
 - Call: ("call", function name, argument, ...).
-
-The temporal kinds get their forms with the temporal and trend rules.
+- Previous: ("prev", value).
+- Ago: ("ago", value, duration).
+- HeldFor: ("held_for", condition, duration).
+- Within: ("within", condition, duration).
+- Slope: ("slope", value, window).
 """
 
 RULE_SHAPES = {
@@ -56,6 +59,88 @@ RULE_SHAPES = {
             "near_ground_descent_max_mps",
             "descent_max_mps",
         ),
+    ),
+    "telemetry-heartbeat": (
+        "<=",
+        ("-", "mission_time_s", ("prev", "mission_time_s")),
+        "heartbeat_max_s",
+    ),
+    "monotonic-sequence": (
+        "and",
+        (
+            "==",
+            "sequence_number",
+            ("+", ("prev", "sequence_number"), ("number", "1")),
+        ),
+        (">", "mission_time_s", ("prev", "mission_time_s")),
+    ),
+    "battery-tier-low": (
+        "implies",
+        (
+            "held_for",
+            ("<", "battery_percent", "battery_low_percent"),
+            "reaction_time_s",
+        ),
+        ("<", "home_distance_m", ("ago", "home_distance_m", "closing_window_s")),
+    ),
+    "battery-tier-critical": (
+        "implies",
+        (
+            "held_for",
+            ("<", "battery_percent", "battery_critical_percent"),
+            "reaction_time_s",
+        ),
+        (">", "descent_speed_mps", ("number", "0")),
+    ),
+    "battery-tier-emergency": (
+        "implies",
+        ("<", "battery_percent", "battery_emergency_percent"),
+        (
+            "within",
+            ("<", "altitude_m", "landed_altitude_m"),
+            "landing_deadline_s",
+        ),
+    ),
+    "no-sudden-jump": (
+        "<=",
+        (
+            "/",
+            ("call", "norm", ("-", "position_ned_m", ("prev", "position_ned_m"))),
+            ("-", "mission_time_s", ("prev", "mission_time_s")),
+        ),
+        "jump_rate_max_mps",
+    ),
+    "battery-drain-rate": (
+        "<=",
+        ("neg", ("slope", "battery_percent", "drain_window_s")),
+        "drain_rate_max_percent_per_s",
+    ),
+    "battery-runout-forecast": (
+        ">=",
+        (
+            "/",
+            ("-", "battery_percent", "battery_critical_percent"),
+            ("neg", ("slope", "battery_percent", "trend_window_s")),
+        ),
+        "return_time_s",
+    ),
+    "altitude-trend-ceiling": (
+        "<=",
+        (
+            "+",
+            "altitude_m",
+            ("*", ("slope", "altitude_m", "climb_window_s"), "lookahead_s"),
+        ),
+        "altitude_ceiling_m",
+    ),
+    "geofence-forecast": (
+        "<=",
+        (
+            "call",
+            "hnorm",
+            ("+", "position_ned_m", ("*", "velocity_ned_mps", "lookahead_s")),
+        ),
+        "fence_radius_m",
     ),
 }
 
