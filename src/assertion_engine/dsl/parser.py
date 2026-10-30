@@ -11,8 +11,13 @@ Every parse also returns the operand's extent, which includes the parentheses
 around a grouped operand: a parent node's span covers them, the grouped
 node's own span does not (contracts/syntax-tree.md "Span").
 
+A temporal keyword is shaped like a call but takes a fixed number of
+arguments (grammar `temporal`): its node runs from the keyword to its ")",
+and a missing or extra argument is a syntax error, not an arity_mismatch.
+
 The first syntax error stops the parse and points at one token: the
-unexpected or reserved token, a chain's second comparison operator, the "("
+unexpected or reserved token (for a temporal keyword, the token where its
+next "," or its ")" was due), a chain's second comparison operator, the "("
 left unclosed, or the token that opens nesting level DEPTH_LIMIT + 1. Every
 operand parse but the rule body's own opens one level, so the limit bounds
 the recursion whatever nests (data-model.md "Parse depth limit"). At the end
@@ -25,18 +30,23 @@ from types import MappingProxyType
 from assertion_engine.dsl.errors import Diagnostic, ExpressionLocation, RuleSetError
 from assertion_engine.dsl.lexer import Token, tokenize
 from assertion_engine.dsl.syntax import (
+    Ago,
     And,
     Arithmetic,
     Call,
     Compare,
     Component,
     Conditional,
+    HeldFor,
     Implies,
     Name,
     Negate,
     Node,
     Number,
+    Previous,
+    Slope,
     Span,
+    Within,
 )
 
 BINDING_POWERS = MappingProxyType(
@@ -61,6 +71,14 @@ _INFIX_LEVELS = {
     ".": "postfix",
 }
 _RIGHT_ASSOCIATIVE = frozenset({"implication"})
+# keyword: (grammar production, node kind, argument count)
+_TEMPORAL = {
+    "prev": ("previous", Previous, 1),
+    "ago": ("ago", Ago, 2),
+    "held_for": ("held_for", HeldFor, 2),
+    "within": ("within", Within, 2),
+    "slope": ("slope", Slope, 2),
+}
 AXES = frozenset({"n", "e", "d"})
 DEPTH_LIMIT = 100
 
@@ -110,12 +128,15 @@ class _Parser:
             raise _unexpected(token)
         return token
 
-    def close(self, opening: Token) -> Token:
-        """The ")" for opening; input that ends first leaves opening unclosed."""
+    def close(self, opening: Token, text: str = ")") -> Token:
+        """The ")" for opening, or the "," before its next argument.
+
+        Input that ends first leaves opening unclosed.
+        """
         token = self.advance()
         if token.kind == "end_of_input":
             raise _error("unclosed_parenthesis", opening, "'(' is never closed")
-        if token.text != ")":
+        if token.text != text:
             raise _unexpected(token)
         return token
 
@@ -157,6 +178,8 @@ class _Parser:
                 return self.call(token)
             self.record("name")
             return Name(token.text, token.span), start, end
+        if token.text in _TEMPORAL:
+            return self.temporal(token)
         if token.text == "(":
             node, _, _ = self.operand(0)
             end = _end(self.close(token))
@@ -188,6 +211,17 @@ class _Parser:
         start, end = _start(function), _end(self.close(opening))
         self.record("call")
         return Call(function.text, tuple(arguments), Span(*start, *end)), start, end
+
+    def temporal(self, keyword: Token) -> tuple[Node, Position, Position]:
+        production, kind, count = _TEMPORAL[keyword.text]
+        opening = self.expect("(")
+        arguments = [self.operand(0)[0]]
+        for _ in range(count - 1):
+            self.close(opening, ",")
+            arguments.append(self.operand(0)[0])
+        start, end = _start(keyword), _end(self.close(opening))
+        self.record(production)
+        return kind(*arguments, Span(*start, *end)), start, end
 
     def infix(
         self, operator: Token, level: str, left: Node, start: Position

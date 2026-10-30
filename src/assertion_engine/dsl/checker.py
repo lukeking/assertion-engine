@@ -13,14 +13,22 @@ error raises RuleSetError; nothing partial is returned.
 Order inside one tree: depth first, children left to right, and a node's own
 rule after all its children; a call resolves its function name, then infers
 its arguments (their own errors first), then checks arity, then the argument
-kinds. A derived quantity met by name
+kinds. A temporal keyword checks its value's kind, then its duration: a
+scalar, then a literal duration's sign, then s. A derived quantity met by name
 is checked on the spot, so its errors come before its dependent's; a name
 whose quantity is still being checked closes a cycle (derived_cycle there).
 
 A type_mismatch points at the first operand, in source order, whose kind the
 construct rejects on its own; operands that are acceptable one by one but not
 together (different kinds, vector * vector) point at the construct, as do
-dimension mismatches.
+dimension mismatches. A duration is rejected on its own, so its errors point
+at the duration.
+
+A literal duration is a number under any unary '-'. One not above zero is
+nonpositive_duration before its dimension is looked at: literal 0 would take
+the duration position's s, every other literal is dimensionless, so a
+positive one is a dimension_mismatch and a negative one could otherwise never
+be reported as nonpositive.
 """
 
 from collections.abc import Callable, Mapping
@@ -29,18 +37,23 @@ from types import MappingProxyType
 
 from assertion_engine.dsl.errors import Diagnostic, ExpressionLocation, RuleSetError
 from assertion_engine.dsl.syntax import (
+    Ago,
     And,
     Arithmetic,
     Call,
     Compare,
     Component,
     Conditional,
+    HeldFor,
     Implies,
     Name,
     Negate,
     Node,
     Number,
+    Previous,
+    Slope,
     Span,
+    Within,
 )
 from assertion_engine.dsl.units import Dimension, dimension_of
 from assertion_engine.dsl.vocabulary import FIELDS, FUNCTIONS
@@ -62,6 +75,8 @@ class Type:
 BOOL = Type("bool")
 _DIMENSIONLESS = Type("scalar", Dimension())
 _VALUES = ("scalar", "vector")
+_ANY = ("bool", *_VALUES)
+_SECONDS = dimension_of("s")
 _FIELDS = MappingProxyType(
     {
         name: ("field", Type(kind, dimension_of(unit)))
@@ -237,7 +252,20 @@ class _TreeChecker:
                 return self.same(node, then_type, else_type, "'if' branches")
             case Call():
                 return self.call(node)
-        raise NotImplementedError(f"{type(node).__name__} nodes are not checked yet")
+            case Previous(value=value):
+                return self.infer(value)
+            case Ago(value=value, duration=duration):
+                return self.temporal(value, _ANY, duration, "'ago'")
+            case HeldFor(condition=condition, duration=duration):
+                self.temporal(condition, ("bool",), duration, "'held_for'")
+                return BOOL
+            case Within(condition=condition, duration=duration):
+                self.temporal(condition, ("bool",), duration, "'within'")
+                return BOOL
+            case Slope(value=value, window=window):
+                scalar = self.temporal(value, ("scalar",), window, "'slope'")
+                return Type("scalar", scalar.dimension / _SECONDS)
+        raise TypeError(f"{type(node).__name__} is not a syntax-tree node")
 
     def name(self, node: Name) -> Type:
         resolution = self.resolve(node)
@@ -278,6 +306,21 @@ class _TreeChecker:
             self.require(argument, type_, (kind,), f"{node.function}()")
         return Type(result, arguments[0].dimension)
 
+    def temporal(
+        self, value: Node, kinds: tuple, duration: Node, construct: str
+    ) -> Type:
+        """A value of kinds and a duration in s; returns the value's type."""
+        value_type, duration_type = self.infer(value), self.infer(duration)
+        self.require(value, value_type, kinds, construct)
+        self.require(duration, duration_type, ("scalar",), f"{construct} duration")
+        if _is_nonpositive_literal(duration):
+            message = f"{construct} duration must be positive"
+            raise self.error("nonpositive_duration", duration, message)
+        if duration_type.dimension != _SECONDS:
+            message = f"{construct} duration must be in s, not {duration_type}"
+            raise self.error("dimension_mismatch", duration, message)
+        return value_type
+
     def logic(self, left: Node, right: Node, construct: str) -> Type:
         left_type, right_type = self.infer(left), self.infer(right)
         self.require(left, left_type, ("bool",), construct)
@@ -311,6 +354,14 @@ class _TreeChecker:
 def _is_zero(node: Node) -> bool:
     """A number literal of value zero, however written (0, 00, 0.0)."""
     return isinstance(node, Number) and set(node.text) <= {"0", "."}
+
+
+def _is_nonpositive_literal(node: Node) -> bool:
+    """A number literal under any unary '-' whose value is not above zero."""
+    negated = False
+    while isinstance(node, Negate):
+        node, negated = node.operand, not negated
+    return isinstance(node, Number) and (negated or _is_zero(node))
 
 
 def _location(text: str, span: Span, **owner) -> ExpressionLocation:

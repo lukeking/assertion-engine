@@ -1,4 +1,4 @@
-"""FR-002/FR-003/FR-004/FR-006: Pratt parsing of the non-temporal constructs.
+"""FR-002/FR-003/FR-004/FR-006/FR-007/FR-008: Pratt parsing of every construct.
 
 Expected trees are written by hand from contracts/grammar.ebnf and
 contracts/syntax-tree.md, spans included; none is produced by the parser.
@@ -11,17 +11,22 @@ import pytest
 from assertion_engine.dsl.errors import ExpressionLocation, RuleSetError
 from assertion_engine.dsl.parser import BINDING_POWERS, parse
 from assertion_engine.dsl.syntax import (
+    Ago,
     And,
     Arithmetic,
     Call,
     Compare,
     Component,
     Conditional,
+    HeldFor,
     Implies,
     Name,
     Negate,
     Number,
+    Previous,
+    Slope,
     Span,
+    Within,
 )
 
 
@@ -241,6 +246,134 @@ def test_FR004_calls_nest_and_take_any_expression():
     )
 
 
+# Temporal keywords (grammar `temporal`): call-shaped, one node kind per
+# keyword, the duration last.
+
+
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        ("prev(a)", Previous(name("a", 6), span(1, 8))),
+        ("ago(a, d)", Ago(name("a", 5), name("d", 8), span(1, 10))),
+        ("held_for(c, d)", HeldFor(name("c", 10), name("d", 13), span(1, 15))),
+        ("within(c, d)", Within(name("c", 8), name("d", 11), span(1, 13))),
+        ("slope(x, w)", Slope(name("x", 7), name("w", 10), span(1, 12))),
+    ],
+    ids=["previous", "ago", "held_for", "within", "slope"],
+)
+def test_FR007_temporal_keyword_builds_its_own_kind(text, expected):
+    assert parse(text) == expected
+
+
+def test_FR007_held_for_and_within_are_different_kinds():
+    # Spec US3 scenario 2: "held for N seconds" and "happens within N seconds"
+    # take the same arguments and stay apart in the tree.
+    held_for, within = parse("held_for(c, d)"), parse("within(c, d)")
+    assert type(held_for) is HeldFor
+    assert type(within) is Within
+    assert held_for != within
+
+
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        (
+            # battery-tier-low: condition, duration and requirement apart.
+            "held_for(b < l, t) implies h < ago(h, w)",
+            Implies(
+                HeldFor(
+                    Compare("<", name("b", 10), name("l", 14), span(10, 15)),
+                    name("t", 17),
+                    span(1, 19),
+                ),
+                Compare(
+                    "<",
+                    name("h", 28),
+                    Ago(name("h", 36), name("w", 39), span(32, 41)),
+                    span(28, 41),
+                ),
+                span(1, 41),
+            ),
+        ),
+        (
+            # battery-drain-rate
+            "-slope(x, w) <= r",
+            Compare(
+                "<=",
+                Negate(Slope(name("x", 8), name("w", 11), span(2, 13)), span(1, 13)),
+                name("r", 17),
+                span(1, 18),
+            ),
+        ),
+        (
+            # altitude-trend-ceiling
+            "a + slope(a, w) * t <= c",
+            Compare(
+                "<=",
+                Arithmetic(
+                    "+",
+                    name("a", 1),
+                    Arithmetic(
+                        "*",
+                        Slope(name("a", 11), name("w", 14), span(5, 16)),
+                        name("t", 19),
+                        span(5, 20),
+                    ),
+                    span(1, 20),
+                ),
+                name("c", 24),
+                span(1, 25),
+            ),
+        ),
+        (
+            # monotonic-sequence
+            "s == prev(s) + 1",
+            Compare(
+                "==",
+                name("s", 1),
+                Arithmetic(
+                    "+",
+                    Previous(name("s", 11), span(6, 13)),
+                    Number("1", span(16, 17)),
+                    span(6, 17),
+                ),
+                span(1, 17),
+            ),
+        ),
+        (
+            "prev(p).d",
+            Component(Previous(name("p", 6), span(1, 8)), "d", span(1, 10)),
+        ),
+        (
+            "prev(ago(w, 5))",
+            Previous(
+                Ago(name("w", 10), Number("5", span(13, 14)), span(6, 15)),
+                span(1, 16),
+            ),
+        ),
+        (
+            "ago(if c then a else b, d)",
+            Ago(
+                Conditional(name("c", 8), name("a", 15), name("b", 22), span(5, 23)),
+                name("d", 25),
+                span(1, 27),
+            ),
+        ),
+    ],
+    ids=[
+        "implication",
+        "negated",
+        "product",
+        "sum",
+        "postfix",
+        "nested",
+        "conditional-argument",
+    ],
+)
+def test_FR007_temporal_node_is_an_operand_like_a_call(text, expected):
+    assert parse(text) == expected
+
+
 # Spans, written out in full; parentheses that wrap a node are not in its span.
 
 
@@ -297,6 +430,20 @@ def test_FR003_multiline_spans():
             Span(2, 7, 3, 5),
         ),
         Span(1, 1, 3, 6),
+    )
+
+
+def test_FR003_temporal_span_runs_from_the_keyword_to_its_parenthesis():
+    assert parse("held_for( (c), d )") == HeldFor(
+        Name("c", Span(1, 12, 1, 13)),
+        Name("d", Span(1, 16, 1, 17)),
+        Span(1, 1, 1, 19),
+    )
+
+
+def test_FR003_multiline_temporal_span():
+    assert parse("within(c,\n  d)") == Within(
+        Name("c", Span(1, 8, 1, 9)), Name("d", Span(2, 3, 2, 4)), Span(1, 1, 2, 5)
     )
 
 
@@ -359,6 +506,12 @@ def test_SC006_collector_records_grouping_and_built_productions():
         ("a and b", {"conjunction": 1, "name": 2}),
         ("a implies b", {"implication": 1, "name": 2}),
         ("if a then b else c", {"conditional": 1, "name": 3}),
+        # `temporal` builds nothing and is not recorded; each keyword is.
+        ("prev(a)", {"previous": 1, "name": 1}),
+        ("ago(a, 1)", {"ago": 1, "name": 1, "number": 1}),
+        ("held_for(a, b)", {"held_for": 1, "name": 2}),
+        ("within(a, b)", {"within": 1, "name": 2}),
+        ("slope(a, b)", {"slope": 1, "name": 2}),
     ],
 )
 def test_SC006_collector_names_each_production_once_per_construct(text, expected):
@@ -407,6 +560,16 @@ def conditionals(depth):
     return "if a then b else " * depth + "c"
 
 
+def temporal_values(depth):
+    return "prev(" * depth + "a" + ")" * depth
+
+
+def temporal_durations(depth):
+    # Each duration holds the next keyword; that keyword's value opens the
+    # level after the duration's, at its "(".
+    return "ago(a, " * depth + "b" + ")" * depth
+
+
 NESTINGS = pytest.mark.parametrize(
     ("nest", "opener"),
     [
@@ -415,8 +578,18 @@ NESTINGS = pytest.mark.parametrize(
         (calls, at(202, "(")),
         (implications, at(1003, "implies")),
         (conditionals, at(1701, "if")),
+        (temporal_values, at(505, "(")),
+        (temporal_durations, at(704, "(")),
     ],
-    ids=["groups", "negations", "calls", "implications", "conditionals"],
+    ids=[
+        "groups",
+        "negations",
+        "calls",
+        "implications",
+        "conditionals",
+        "temporal-values",
+        "temporal-durations",
+    ],
 )
 
 
@@ -444,3 +617,59 @@ def test_FR003_an_infix_operand_opens_a_level_too():
 def test_FR003_sibling_operands_do_not_add_up():
     parse("f(" + groups(99) + ", " + groups(99) + ")")
     parse(groups(99) + " and " + groups(98))
+
+
+# Temporal argument counts are syntax (grammar `temporal`), unlike a call's
+# (arity_mismatch in the checker): the token where "," or ")" was due is
+# unexpected, and input that ends first leaves the "(" unclosed as in a call.
+
+
+def syntax_error(text):
+    with pytest.raises(RuleSetError) as caught:
+        parse(text)
+    return caught.value.diagnostic
+
+
+@pytest.mark.parametrize(
+    ("text", "location"),
+    [
+        ("prev(a, b)", at(7, ",")),
+        ("ago(a)", at(6, ")")),
+        ("held_for(c)", at(11, ")")),
+        ("within(c, d, e)", at(12, ",")),
+        ("slope(x)", at(8, ")")),
+        ("slope(x, w, v)", at(11, ",")),
+        ("prev()", at(6, ")")),
+        ("prev < a", at(6, "<")),
+    ],
+    ids=[
+        "prev-extra",
+        "ago-missing",
+        "held_for-missing",
+        "within-extra",
+        "slope-missing",
+        "slope-extra",
+        "prev-empty",
+        "no-parenthesis",
+    ],
+)
+def test_FR007_temporal_argument_count_is_unexpected_token(text, location):
+    diagnostic = syntax_error(text)
+    assert diagnostic.code == "unexpected_token"
+    assert diagnostic.location == location
+
+
+@pytest.mark.parametrize(
+    ("text", "code", "location"),
+    [
+        ("prev(a", "unclosed_parenthesis", at(5, "(")),
+        ("ago(a", "unclosed_parenthesis", at(4, "(")),
+        ("ago(a,", "unexpected_end", ExpressionLocation(1, 7, 8, "")),
+        ("slope", "unexpected_end", ExpressionLocation(1, 6, 7, "")),
+    ],
+    ids=["before-close", "before-separator", "after-separator", "after-keyword"],
+)
+def test_FR007_temporal_cut_short_by_the_end_of_input(text, code, location):
+    diagnostic = syntax_error(text)
+    assert diagnostic.code == code
+    assert diagnostic.location == location

@@ -1,5 +1,5 @@
 # SC-005 regression suite (data-model.md "Regression suite files"): every
-# diagnostic code except nonpositive_duration (US3), at least 2 cases each.
+# diagnostic code, at least 2 cases each.
 #
 # A case has a `code`, either an `expression` or a whole `ruleset`, and its
 # expected location, counted by hand:
@@ -503,6 +503,39 @@ line = 1
 column = 1
 end_column = 13
 fragment = "altitude_m +"
+
+[[case]]
+code = "nonpositive_duration"
+expression = "held_for(battery_percent < limit_percent, 0) implies altitude_m < limit_m"
+line = 1
+column = 43
+end_column = 44
+fragment = "0"
+
+[[case]]
+code = "nonpositive_duration"
+# A negated literal is a literal duration too.
+expression = "ago(altitude_m, -5) < limit_m"
+line = 1
+column = 17
+end_column = 19
+fragment = "-5"
+
+[[case]]
+code = "nonpositive_duration"
+expression = "battery_percent < limit_percent\n  implies within(altitude_m < limit_m, 0.0)"
+line = 2
+column = 40
+end_column = 43
+fragment = "0.0"
+
+[[case]]
+code = "nonpositive_duration"
+expression = "slope(altitude_m, -0.5) < limit_mps"
+line = 1
+column = 19
+end_column = 23
+fragment = "-0.5"
 
 [[case]]
 code = "derived_unit_mismatch"

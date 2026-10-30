@@ -109,7 +109,7 @@ a `used by:` annotation in grammar.ebnf (SC-006); the 8 structural productions a
 | lexer | `invalid_character` | `battery_percent ≥ 20` |
 | lexer | `invalid_number` | `1e3`, `2.` |
 | parser | `empty_expression` | expression is only whitespace |
-| parser | `unexpected_token` | `battery_percent >= >= x`; a conditional unparenthesized inside a comparison |
+| parser | `unexpected_token` | `battery_percent >= >= x`; a conditional unparenthesized inside a comparison; `slope(x)` (a temporal keyword's argument count is grammar) |
 | parser | `unexpected_end` | `battery_percent >=` |
 | parser | `unclosed_parenthesis` | `(a + b` |
 | parser | `trailing_input` | `a < b c` |
@@ -121,7 +121,7 @@ a `used by:` annotation in grammar.ebnf (SC-006); the 8 structural productions a
 | rule set | `unknown_unit` | `unit = "km"` |
 | rule set | `name_conflict` | a parameter named `altitude_m`; the same name in `parameters` and `derived` |
 | checker | `unknown_name` | `batery_percent >= x` |
-| checker | `arity_mismatch` | `norm(a, b)`, `slope(x)` |
+| checker | `arity_mismatch` | `norm(a, b)` |
 | checker | `type_mismatch` | `battery_percent and x`; `norm(battery_percent)`; comparing two vectors |
 | checker | `dimension_mismatch` | `battery_percent > home_distance_m`; `mission_time_s + altitude_m` |
 | checker | `not_boolean_rule` | a rule whose expression is `battery_percent` |

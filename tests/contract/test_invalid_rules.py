@@ -98,9 +98,9 @@ EXPRESSION_CASES = [
 ]
 
 
-def test_SC005_fixture_has_two_cases_for_every_code_but_nonpositive_duration():
+def test_SC005_fixture_has_two_cases_for_every_code():
     counts = Counter(case["code"] for case in CASES)
-    assert set(counts) == set(CODES) - {"nonpositive_duration"}
+    assert set(counts) == set(CODES)
     assert min(counts.values()) >= 2
 
 

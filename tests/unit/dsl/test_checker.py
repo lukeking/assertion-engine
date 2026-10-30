@@ -931,3 +931,213 @@ def test_FR011_multiline_node_location_ends_with_its_start_line(text, code, loca
     diagnostic = rule_error(text)
     assert diagnostic.code == code
     assert diagnostic.location == location
+
+
+# Temporal keywords (contracts/ruleset.md "Temporal keywords"): prev and ago keep
+# their value's type, held_for and within are bool, slope is its value's
+# dimension per second. Every duration is a scalar in s; a literal duration
+# (a number under any unary '-') that is not above zero is nonpositive_duration
+# before its dimension is looked at, so 0, -5 and -0 are nonpositive_duration and
+# a positive literal such as 5 is a dimensionless dimension_mismatch. A duration
+# the keyword rejects on its own is located at the duration.
+
+
+@pytest.mark.parametrize(
+    ("text", "unit", "expected"),
+    [
+        ("prev(altitude_m)", "m", "scalar[m]"),
+        ("prev(position_ned_m)", "m", "vector[m]"),
+        ("ago(battery_percent, limit_s)", "%", "scalar[%]"),
+        ("ago(velocity_ned_mps, limit_s)", "m/s", "vector[m/s]"),
+    ],
+)
+def test_FR007_prev_and_ago_keep_their_value_type(text, unit, expected):
+    assert value_type(text, unit) == expected
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "prev(altitude_m < limit_m)",
+        "ago(altitude_m < limit_m, limit_s)",
+        "held_for(battery_percent < limit_percent, limit_s)",
+        "within(altitude_m < limit_m, mission_time_s)",
+    ],
+    ids=["prev", "ago", "held_for", "within"],
+)
+def test_FR007_temporal_form_of_a_bool_is_bool(text):
+    tree, annotations = check(text)
+    assert str(annotations.type_of(tree)) == "bool"
+
+
+@pytest.mark.parametrize(
+    ("text", "unit", "expected"),
+    [
+        ("slope(battery_percent, limit_s)", "%/s", "scalar[%/s]"),
+        ("slope(altitude_m, mission_time_s)", "m/s", "scalar[m/s]"),
+    ],
+)
+def test_FR008_slope_is_its_value_dimension_per_second(text, unit, expected):
+    assert value_type(text, unit) == expected
+
+
+def test_FR008_slope_may_infer_an_undeclarable_dimension():
+    tree, annotations = check("slope(limit_mps, limit_s) > limit_mps / limit_s")
+    assert str(annotations.type_of(tree.left)) == "scalar[m/s^2]"
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "mission_time_s - prev(mission_time_s) <= limit_s",
+        "norm(position_ned_m - prev(position_ned_m))"
+        " / (mission_time_s - prev(mission_time_s)) <= limit_mps",
+        "held_for(battery_percent < limit_percent, limit_s)"
+        " implies home_distance_m < ago(home_distance_m, limit_s)",
+        "-slope(battery_percent, limit_s) <= rate_percent_per_s",
+        "altitude_m + slope(altitude_m, limit_s) * limit_s <= limit_m",
+    ],
+    ids=[
+        "telemetry-heartbeat",
+        "no-sudden-jump",
+        "battery-tier-low",
+        "battery-drain-rate",
+        "altitude-trend-ceiling",
+    ],
+)
+def test_FR007_corpus_shaped_temporal_rule_is_bool(text):
+    tree, annotations = check(text)
+    assert str(annotations.type_of(tree)) == "bool"
+
+
+@pytest.mark.parametrize(
+    ("text", "location"),
+    [
+        ("held_for(battery_percent, limit_s)", at(10, "battery_percent")),
+        ("within(position_ned_m, limit_s)", at(8, "position_ned_m")),
+        ("slope(position_ned_m, limit_s) < limit_mps", at(7, "position_ned_m")),
+        (
+            "slope(altitude_m < limit_m, limit_s) < limit_mps",
+            at(7, "altitude_m < limit_m"),
+        ),
+    ],
+    ids=["held_for-scalar", "within-vector", "slope-vector", "slope-bool"],
+)
+def test_FR007_temporal_value_of_a_rejected_kind_is_type_mismatch(text, location):
+    diagnostic = rule_error(text)
+    assert diagnostic.code == "type_mismatch"
+    assert diagnostic.location == location
+
+
+@pytest.mark.parametrize(
+    ("text", "location"),
+    [
+        (
+            "held_for(altitude_m < limit_m, position_ned_m)",
+            at(32, "position_ned_m"),
+        ),
+        (
+            "ago(altitude_m, altitude_m < limit_m) < limit_m",
+            at(17, "altitude_m < limit_m"),
+        ),
+    ],
+    ids=["vector", "bool"],
+)
+def test_FR007_duration_must_be_a_scalar(text, location):
+    diagnostic = rule_error(text)
+    assert diagnostic.code == "type_mismatch"
+    assert diagnostic.location == location
+
+
+@pytest.mark.parametrize(
+    ("text", "location"),
+    [
+        ("ago(altitude_m, limit_m) < limit_m", at(17, "limit_m")),
+        ("held_for(altitude_m < limit_m, limit_mps)", at(32, "limit_mps")),
+        ("within(altitude_m < limit_m, count)", at(30, "count")),
+        ("slope(altitude_m, limit_mps) < limit_mps", at(19, "limit_mps")),
+        ("held_for(altitude_m < limit_m, 5)", at(32, "5")),
+        ("within(altitude_m < limit_m, 2.5)", at(30, "2.5")),
+        ("held_for(altitude_m < limit_m, --5)", at(32, "--5")),
+    ],
+    ids=[
+        "ago",
+        "held_for",
+        "within",
+        "slope",
+        "positive-literal",
+        "positive-decimal",
+        "double-negation",
+    ],
+)
+def test_FR007_duration_not_in_seconds_is_dimension_mismatch(text, location):
+    diagnostic = rule_error(text)
+    assert diagnostic.code == "dimension_mismatch"
+    assert diagnostic.location == location
+
+
+@pytest.mark.parametrize(
+    ("text", "location"),
+    [
+        ("held_for(altitude_m < limit_m, 0)", at(32, "0")),
+        ("within(altitude_m < limit_m, 0.0)", at(30, "0.0")),
+        ("ago(altitude_m, 00) < limit_m", at(17, "00")),
+        ("ago(altitude_m, -5) < limit_m", at(17, "-5")),
+        ("slope(altitude_m, -0) < limit_mps", at(19, "-0")),
+        ("held_for(altitude_m < limit_m, -(2.5))", at(32, "-(2.5)")),
+        ("within(altitude_m < limit_m, --0)", at(30, "--0")),
+    ],
+    ids=[
+        "zero",
+        "decimal-zero",
+        "double-zero",
+        "negative",
+        "negative-zero",
+        "negated-group",
+        "double-negated-zero",
+    ],
+)
+def test_FR007_literal_duration_not_above_zero_is_nonpositive_duration(text, location):
+    diagnostic = rule_error(text)
+    assert diagnostic.code == "nonpositive_duration"
+    assert diagnostic.location == location
+
+
+def test_FR007_only_a_literal_duration_has_its_sign_checked():
+    # Parameter values are bound in M2 and checked there (contracts/ruleset.md).
+    tree, annotations = check("ago(altitude_m, -limit_s) < limit_m")
+    assert str(annotations.type_of(tree.left.duration)) == "scalar[s]"
+    assert str(annotations.type_of(tree)) == "bool"
+
+
+@pytest.mark.parametrize(
+    ("text", "code", "location"),
+    [
+        (
+            "held_for(battery_percent, altitud_m)",
+            "unknown_name",
+            at(27, "altitud_m"),
+        ),
+        ("ago(batery, altitud_m) < limit_m", "unknown_name", at(5, "batery")),
+        ("held_for(battery_percent, 0)", "type_mismatch", at(10, "battery_percent")),
+        (
+            "slope(position_ned_m, limit_m) < limit_mps",
+            "type_mismatch",
+            at(7, "position_ned_m"),
+        ),
+        ("prev(ago(altitude_m, 0)) < limit_m", "nonpositive_duration", at(22, "0")),
+        ("ago(altitude_m, limit_m) < count", "dimension_mismatch", at(17, "limit_m")),
+    ],
+    ids=[
+        "arguments-before-the-keyword",
+        "value-argument-first",
+        "value-before-duration",
+        "value-kind-before-duration-dimension",
+        "inner-keyword-first",
+        "keyword-before-its-parent",
+    ],
+)
+def test_FR011_temporal_first_error_in_traversal_order_wins(text, code, location):
+    diagnostic = rule_error(text)
+    assert diagnostic.code == code
+    assert diagnostic.location == location
