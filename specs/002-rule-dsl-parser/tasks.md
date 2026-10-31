@@ -173,15 +173,16 @@
 
 ### Tests for User Story 4（第二部分）
 
-- [ ] T038 [P] [US4] 在 `tests/contract/test_grammar_coverage.py` 撰寫：從 `contracts/grammar.ebnf` 讀出帶 `used by:` 的 17 條產生式；對 4 個內建衍生量、`return_time_s` 與 17 條規則解析一輪，
+- [-] T038 [P] [US4] 在 `tests/contract/test_grammar_coverage.py` 撰寫：從 `contracts/grammar.ebnf` 讀出帶 `used by:` 的 17 條產生式；對 4 個內建衍生量、`return_time_s` 與 17 條規則解析一輪，
   coverage collector 記下的集合必須恰好等於它（SC-006）；`parser.BINDING_POWERS` 的層級順序等於 grammar.ebnf 檔頭的 8 個層級（FR-002）；每個 `used by:` 的名稱都存在於語料或衍生量。
-- [ ] T039 [P] [US4] 在 `tests/contract/test_precedence_bite.py` 撰寫：對 8 個層級的全部 7 組相鄰對（含前綴的 conditional 與 unary），用注入的結合力表對調後解析語料與 T010 的案例，
+- [-] T039 [P] [US4] 在 `tests/contract/test_precedence_bite.py` 撰寫：對 8 個層級的全部 7 組相鄰對（含前綴的 conditional 與 unary），用注入的結合力表對調後解析語料與 T010 的案例，
   每一組至少一棵樹改變；
-  把任一層級的結合力改錯時，至少一條 golden 比對失敗（SC-007）。
+  把任一層級的結合力改錯時，至少一條 golden 或衍生量手寫結構（`rule_shapes.py` 的 `DERIVED_SHAPES`）的比對失敗，
+  解析報錯也算失敗（SC-007）。語料規則沒有 `.`，postfix 只有衍生量用到，所以比對範圍含衍生量（user 2026-10-31 裁示）。
 
 ### Implementation for User Story 4（第二部分）
 
-- [ ] T040 [US4] 執行 T038、T039；若通過時沒有經過 RED，在隔離 scratch copy 分別刪掉 `specs/002-rule-dsl-parser/contracts/grammar.ebnf` 一條 `used by:`、
+- [-] T040 [US4] 執行 T038、T039；若通過時沒有經過 RED，在隔離 scratch copy 分別刪掉 `specs/002-rule-dsl-parser/contracts/grammar.ebnf` 一條 `used by:`、
   在 `src/assertion_engine/dsl/parser.py` 加一個語料沒用到的構造、改錯一個結合力，確認未修改的測試各自失敗在對的斷言上；
   修正 `src/assertion_engine/dsl/parser.py` 或 `specs/002-rule-dsl-parser/contracts/grammar.ebnf` 直到兩個測試在主工作區通過。（depends on T038、T039、CP6）
 - [ ] T041 [US4] 撰寫 `docs/algorithms/002-rule-dsl-parsing.md`：Pratt parser 與結合力的白話說明（Crafting Interpreters §17.6、Pratt 1973），每層一函式 recursive descent 的對照（同書 ch. 6）；
