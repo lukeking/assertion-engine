@@ -1,0 +1,611 @@
+# SC-005 regression suite (data-model.md "Regression suite files"): every
+# diagnostic code, at least 2 cases each.
+#
+# A case has a `code`, either an `expression` or a whole `ruleset`, and its
+# expected location, counted by hand:
+# - `line`, `column`, `end_column`, `fragment`: positions within the expression
+#   string. An `expression` case is rule `case` of the test's minimal rule set;
+#   a `ruleset` case names the `rule` or `derived` that owns the expression.
+#   A location at the end of the text is one column wide, fragment "".
+# - `file_line`, `file_column`: the rule-set file; outside TOML syntax errors,
+#   the start of the line that defines the offending key or table.
+
+# lexer
+
+[[case]]
+code = "invalid_character"
+expression = "battery_percent ≥ limit_percent"
+line = 1
+column = 17
+end_column = 18
+fragment = "≥"
+
+[[case]]
+code = "invalid_character"
+expression = "altitude_m < limit_m and\n  count > 0;"
+line = 2
+column = 12
+end_column = 13
+fragment = ";"
+
+[[case]]
+code = "invalid_character"
+expression = "limit_m = altitude_m"
+line = 1
+column = 9
+end_column = 10
+fragment = "="
+
+[[case]]
+code = "invalid_number"
+expression = "altitude_m < 1e3"
+line = 1
+column = 14
+end_column = 17
+fragment = "1e3"
+
+[[case]]
+code = "invalid_number"
+expression = "battery_percent > 2."
+line = 1
+column = 19
+end_column = 21
+fragment = "2."
+
+[[case]]
+code = "invalid_number"
+expression = "count < 2.5.1"
+line = 1
+column = 9
+end_column = 14
+fragment = "2.5.1"
+
+# parser
+
+[[case]]
+code = "empty_expression"
+expression = ""
+line = 1
+column = 1
+end_column = 2
+fragment = ""
+
+[[case]]
+code = "empty_expression"
+expression = "  \n\t  "
+line = 1
+column = 1
+end_column = 2
+fragment = ""
+
+[[case]]
+code = "unexpected_token"
+expression = "battery_percent >= >= limit_percent"
+line = 1
+column = 20
+end_column = 22
+fragment = ">="
+
+[[case]]
+code = "unexpected_token"
+# A conditional inside a comparison must be parenthesized.
+expression = "altitude_m < if count > 0 then limit_m else limit_m"
+line = 1
+column = 14
+end_column = 16
+fragment = "if"
+
+[[case]]
+code = "unexpected_token"
+expression = "norm() < limit_m"
+line = 1
+column = 6
+end_column = 7
+fragment = ")"
+
+[[case]]
+code = "unexpected_end"
+expression = "battery_percent >="
+line = 1
+column = 19
+end_column = 20
+fragment = ""
+
+[[case]]
+code = "unexpected_end"
+expression = "if count > 0 then altitude_m < limit_m"
+line = 1
+column = 39
+end_column = 40
+fragment = ""
+
+[[case]]
+code = "unexpected_end"
+expression = "altitude_m < limit_m and\n"
+line = 2
+column = 1
+end_column = 2
+fragment = ""
+
+[[case]]
+code = "unclosed_parenthesis"
+expression = "(altitude_m + limit_m < limit_m"
+line = 1
+column = 1
+end_column = 2
+fragment = "("
+
+[[case]]
+code = "unclosed_parenthesis"
+expression = "hnorm(velocity_ned_mps < limit_mps"
+line = 1
+column = 6
+end_column = 7
+fragment = "("
+
+[[case]]
+code = "unclosed_parenthesis"
+# The inner group closes; the outer one is the unmatched parenthesis.
+expression = "((altitude_m) < limit_m"
+line = 1
+column = 1
+end_column = 2
+fragment = "("
+
+[[case]]
+code = "trailing_input"
+expression = "altitude_m < limit_m limit_m"
+line = 1
+column = 22
+end_column = 29
+fragment = "limit_m"
+
+[[case]]
+code = "trailing_input"
+expression = "battery_percent > limit_percent)"
+line = 1
+column = 32
+end_column = 33
+fragment = ")"
+
+[[case]]
+code = "chained_comparison"
+expression = "0 < battery_percent < limit_percent"
+line = 1
+column = 21
+end_column = 22
+fragment = "<"
+
+[[case]]
+code = "chained_comparison"
+expression = "limit_m <= altitude_m == limit_m"
+line = 1
+column = 23
+end_column = 25
+fragment = "=="
+
+[[case]]
+code = "chained_comparison"
+expression = "altitude_m < limit_m + 1 > count"
+line = 1
+column = 26
+end_column = 27
+fragment = ">"
+
+[[case]]
+code = "reserved_word"
+expression = "altitude_m < limit_m or battery_percent < limit_percent"
+line = 1
+column = 22
+end_column = 24
+fragment = "or"
+
+[[case]]
+code = "reserved_word"
+expression = "not altitude_m < limit_m"
+line = 1
+column = 1
+end_column = 4
+fragment = "not"
+
+[[case]]
+code = "reserved_word"
+ruleset = '''
+schema_version = "1.0.0"
+[parameters.not]
+unit = "1"
+[rules.r]
+category = "threshold"
+expression = "battery_percent >= 0"
+'''
+file_line = 2
+file_column = 1
+
+[[case]]
+code = "invalid_axis"
+expression = "position_ned_m.x < limit_m"
+line = 1
+column = 16
+end_column = 17
+fragment = "x"
+
+[[case]]
+code = "invalid_axis"
+expression = "velocity_ned_mps.north > limit_mps"
+line = 1
+column = 18
+end_column = 23
+fragment = "north"
+
+[[case]]
+code = "nesting_too_deep"
+# 101 nested groups; the 101st "(" opens level 101.
+expression = "(((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((altitude_m))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))) < limit_m"
+line = 1
+column = 101
+end_column = 102
+fragment = "("
+
+[[case]]
+code = "nesting_too_deep"
+# 101 consecutive unary "-".
+expression = "-----------------------------------------------------------------------------------------------------altitude_m < limit_m"
+line = 1
+column = 101
+end_column = 102
+fragment = "-"
+
+[[case]]
+code = "nesting_too_deep"
+# 101 nested calls; the 101st "hnorm(" ends at column 6 * 101.
+expression = "hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(hnorm(position_ned_m))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))) < limit_m"
+line = 1
+column = 606
+end_column = 607
+fragment = "("
+
+# rule set
+
+[[case]]
+code = "invalid_ruleset"
+ruleset = '''
+schema_version = "1.0.0"
+[rules.r
+category = "threshold"
+'''
+file_line = 2
+file_column = 9
+
+[[case]]
+code = "invalid_ruleset"
+ruleset = '''
+schema_version = "1.0.0"
+[rules.r]
+category = "threshold"
+expression = "battery_percent >= 0"
+severity = "high"
+'''
+file_line = 5
+file_column = 1
+
+[[case]]
+code = "invalid_ruleset"
+ruleset = '''
+schema_version = "1.0.0"
+
+[rules.r]
+category = "threshold"
+'''
+file_line = 3
+file_column = 1
+
+[[case]]
+code = "invalid_ruleset"
+ruleset = '''
+# next draft
+schema_version = "2.0.0"
+[rules.r]
+category = "threshold"
+expression = "battery_percent >= 0"
+'''
+file_line = 2
+file_column = 1
+
+[[case]]
+code = "invalid_ruleset"
+# FR-009: M1 parameters take no value.
+ruleset = '''
+schema_version = "1.0.0"
+[parameters.limit_m]
+unit = "m"
+value = 120
+[rules.r]
+category = "threshold"
+expression = "altitude_m < limit_m"
+'''
+file_line = 4
+file_column = 1
+
+[[case]]
+code = "unknown_unit"
+ruleset = '''
+schema_version = "1.0.0"
+[parameters.limit_km]
+unit = "km"
+[rules.r]
+category = "threshold"
+expression = "battery_percent >= 0"
+'''
+file_line = 3
+file_column = 1
+
+[[case]]
+code = "unknown_unit"
+ruleset = '''
+schema_version = "1.0.0"
+[derived.acceleration]
+expression = "velocity_ned_mps.d"
+    unit = "m/s^2"
+[rules.r]
+category = "threshold"
+expression = "battery_percent >= 0"
+'''
+file_line = 4
+file_column = 5
+
+[[case]]
+code = "name_conflict"
+ruleset = '''
+schema_version = "1.0.0"
+[parameters.altitude_m]
+unit = "m"
+[rules.r]
+category = "threshold"
+expression = "battery_percent >= 0"
+'''
+file_line = 2
+file_column = 1
+
+[[case]]
+code = "name_conflict"
+ruleset = '''
+schema_version = "1.0.0"
+[parameters.limit_m]
+unit = "m"
+[derived.limit_m]
+unit = "m"
+expression = "altitude_m"
+[rules.r]
+category = "threshold"
+expression = "battery_percent >= 0"
+'''
+file_line = 4
+file_column = 1
+
+[[case]]
+code = "name_conflict"
+ruleset = '''
+schema_version = "1.0.0"
+[derived.norm]
+unit = "m"
+expression = "hnorm(position_ned_m)"
+[rules.r]
+category = "threshold"
+expression = "battery_percent >= 0"
+'''
+file_line = 2
+file_column = 1
+
+# checker
+
+[[case]]
+code = "unknown_name"
+expression = "batery_percent >= limit_percent"
+line = 1
+column = 1
+end_column = 15
+fragment = "batery_percent"
+
+[[case]]
+code = "unknown_name"
+expression = "nrm(position_ned_m) < limit_m"
+line = 1
+column = 1
+end_column = 20
+fragment = "nrm(position_ned_m)"
+
+[[case]]
+code = "unknown_name"
+expression = "altitude_m < limit_km"
+line = 1
+column = 14
+end_column = 22
+fragment = "limit_km"
+
+[[case]]
+code = "arity_mismatch"
+expression = "norm(position_ned_m, velocity_ned_mps) < limit_m"
+line = 1
+column = 1
+end_column = 39
+fragment = "norm(position_ned_m, velocity_ned_mps)"
+
+[[case]]
+code = "arity_mismatch"
+expression = "hnorm(position_ned_m, position_ned_m, position_ned_m) > limit_m"
+line = 1
+column = 1
+end_column = 54
+fragment = "hnorm(position_ned_m, position_ned_m, position_ned_m)"
+
+[[case]]
+code = "type_mismatch"
+expression = "battery_percent and altitude_m < limit_m"
+line = 1
+column = 1
+end_column = 16
+fragment = "battery_percent"
+
+[[case]]
+code = "type_mismatch"
+expression = "norm(battery_percent) < limit_percent"
+line = 1
+column = 6
+end_column = 21
+fragment = "battery_percent"
+
+[[case]]
+code = "type_mismatch"
+# Vectors cannot be compared.
+expression = "position_ned_m < position_ned_m"
+line = 1
+column = 1
+end_column = 15
+fragment = "position_ned_m"
+
+[[case]]
+code = "dimension_mismatch"
+expression = "battery_percent > home_distance_m"
+line = 1
+column = 1
+end_column = 34
+fragment = "battery_percent > home_distance_m"
+
+[[case]]
+code = "dimension_mismatch"
+expression = "mission_time_s + altitude_m > limit_s"
+line = 1
+column = 1
+end_column = 28
+fragment = "mission_time_s + altitude_m"
+
+[[case]]
+code = "not_boolean_rule"
+expression = "battery_percent"
+line = 1
+column = 1
+end_column = 16
+fragment = "battery_percent"
+
+[[case]]
+code = "not_boolean_rule"
+expression = "altitude_m - limit_m"
+line = 1
+column = 1
+end_column = 21
+fragment = "altitude_m - limit_m"
+
+[[case]]
+code = "not_boolean_rule"
+# A node running onto the next line is located to the end of its start line.
+expression = "altitude_m +\n  limit_m"
+line = 1
+column = 1
+end_column = 13
+fragment = "altitude_m +"
+
+[[case]]
+code = "nonpositive_duration"
+expression = "held_for(battery_percent < limit_percent, 0) implies altitude_m < limit_m"
+line = 1
+column = 43
+end_column = 44
+fragment = "0"
+
+[[case]]
+code = "nonpositive_duration"
+# A negated literal is a literal duration too.
+expression = "ago(altitude_m, -5) < limit_m"
+line = 1
+column = 17
+end_column = 19
+fragment = "-5"
+
+[[case]]
+code = "nonpositive_duration"
+expression = "battery_percent < limit_percent\n  implies within(altitude_m < limit_m, 0.0)"
+line = 2
+column = 40
+end_column = 43
+fragment = "0.0"
+
+[[case]]
+code = "nonpositive_duration"
+expression = "slope(altitude_m, -0.5) < limit_mps"
+line = 1
+column = 19
+end_column = 23
+fragment = "-0.5"
+
+[[case]]
+code = "derived_unit_mismatch"
+ruleset = '''
+schema_version = "1.0.0"
+[derived.t]
+unit = "s"
+expression = "altitude_m"
+[rules.r]
+category = "threshold"
+expression = "t > 0"
+'''
+derived = "t"
+line = 1
+column = 1
+end_column = 11
+fragment = "altitude_m"
+
+[[case]]
+code = "derived_unit_mismatch"
+ruleset = '''
+schema_version = "1.0.0"
+[parameters.limit_m]
+unit = "m"
+[derived.low]
+unit = "m"
+expression = "altitude_m < limit_m"
+[rules.r]
+category = "threshold"
+expression = "battery_percent >= 0"
+'''
+derived = "low"
+line = 1
+column = 1
+end_column = 21
+fragment = "altitude_m < limit_m"
+
+[[case]]
+code = "derived_cycle"
+ruleset = '''
+schema_version = "1.0.0"
+[derived.a]
+unit = "1"
+expression = "b + 1"
+[derived.b]
+unit = "1"
+expression = "a + 1"
+[rules.r]
+category = "threshold"
+expression = "a > 0"
+'''
+derived = "b"
+line = 1
+column = 1
+end_column = 2
+fragment = "a"
+
+[[case]]
+code = "derived_cycle"
+ruleset = '''
+schema_version = "1.0.0"
+[derived.a]
+unit = "1"
+expression = "2 * a"
+[rules.r]
+category = "threshold"
+expression = "a > 0"
+'''
+derived = "a"
+line = 1
+column = 5
+end_column = 6
+fragment = "a"

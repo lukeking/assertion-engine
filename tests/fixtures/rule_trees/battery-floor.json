@@ -1,0 +1,1 @@
+{"rule":"battery-floor","tree":{"kind":"Compare","left":{"kind":"Name","name":"battery_percent","span":[1,1,1,16]},"op":">=","right":{"kind":"Name","name":"battery_floor_percent","span":[1,20,1,41]},"span":[1,1,1,41]}}
