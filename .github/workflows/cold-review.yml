@@ -23,15 +23,16 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
           PR: ${{ github.event.pull_request.number }}
-          BASE: ${{ github.event.pull_request.base.ref }}
+          LIST_REF: ${{ github.event.repository.default_branch }}
           DRAFT: ${{ github.event.pull_request.draft }}
         run: |
           set -euo pipefail
-          # 讀 base 分支的清單，不讀 PR 自己的：PR 不能靠改清單把自己豁免掉。
+          # 讀預設分支的清單，不讀 PR 自己的：PR 不能靠改清單把自己豁免掉。也不讀 base 分支的：疊在別的 PR 上時，
+          # base 是下層分支，它的清單可能少了路徑，上層 PR 就無聲過關（GUB-013，bare-repo #248、#250 實測）。
           if ! gh api -H 'Accept: application/vnd.github.raw' \
-              "repos/$REPO/contents/.github/cold-review-paths?ref=$BASE" > paths.txt 2> err.txt; then
+              "repos/$REPO/contents/.github/cold-review-paths?ref=$LIST_REF" > paths.txt 2> err.txt; then
             if grep -q 'HTTP 404' err.txt; then
-              echo "::notice::$BASE 上沒有 .github/cold-review-paths，這個 repo 還沒啟用 cold review。"
+              echo "::notice::$LIST_REF 上沒有 .github/cold-review-paths，這個 repo 還沒啟用 cold review。"
               exit 0
             fi
             echo "::error::讀不到 .github/cold-review-paths：$(head -1 err.txt)"
