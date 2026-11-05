@@ -185,9 +185,17 @@
 - [X] T040 [US4] 執行 T038、T039；若通過時沒有經過 RED，在隔離 scratch copy 分別刪掉 `specs/002-rule-dsl-parser/contracts/grammar.ebnf` 一條 `used by:`、
   在 `src/assertion_engine/dsl/parser.py` 加一個語料沒用到的構造、改錯一個結合力，確認未修改的測試各自失敗在對的斷言上；
   修正 `src/assertion_engine/dsl/parser.py` 或 `specs/002-rule-dsl-parser/contracts/grammar.ebnf` 直到兩個測試在主工作區通過。（depends on T038、T039、CP6）
+- [ ] T048 [US4] 撰寫 `docs/glossary.md`：跨里程碑的術語表，是術語定義的唯一位置，演算法文件與 README 只連過去。每個詞條含給人讀的說法、程式識別字（inline code）、
+  一句定義與判準、不要混用的詞。M1 至少收：單位（`dimension`；判準是「能不能乘一個固定的數換過去」，`%` 是獨立的單位；「量綱」「因次」不用，「維度」另有所指）、
+  維度（只指向量的分量：NED 三軸、`hnorm` 的兩軸）、`bool`／純量／向量、具名參數（`parameter`：規則集宣告、只帶單位不帶值，含門檻、持續時間、視窗長度、速率，
+  比 spec 的「具名門檻」寬）、欄位（`field`）、衍生量（`derived`），以及 `src/assertion_engine/dsl/syntax.py` 的每種節點；「時間位移」（`Ago`、`Previous`；`Slope` 看 M3 的定義）
+  標為待定分類。給人讀的用詞在 review 時交 user 確認；不改 spec、research 等既有文件的用詞（要不要統一另行決定）。
+  在 `tests/contract/test_glossary.py` 撰寫：`syntax.py` 的每個節點類別與名字的三種來源（`field`、`parameter`、`derived`）在 glossary 都有以程式識別字標示的詞條；
+  在隔離 scratch copy 刪掉一個詞條，確認測試失敗在那個識別字上（FR-015）。
 - [ ] T041 [US4] 撰寫 `docs/algorithms/002-rule-dsl-parsing.md`：Pratt parser 與結合力的白話說明（Crafting Interpreters §17.6、Pratt 1973），每層一函式 recursive descent 的對照（同書 ch. 6）；
   5 個時間保留字與 MTL 有界運算子的對應（Koymans 1990）；量綱的定義（BIPM SI 手冊 §2.3.3）與 `%` 作為專案基本量的取捨；樹狀圖版面與 Reingold–Tilford 的差異；
   grammar.ebnf 每條產生式 ↔ parser handler 的對照表；在 T011、T012、T022、T020、T028 的 module docstring 引用對應章節（FR-015）。
+  術語只連到 `docs/glossary.md`，不在本文件另寫定義。（depends on T048）
 - [ ] T042 [US4] 以 `assertion-rules tree` 把 17 條語料規則的圖畫到 `mktemp -d` 的目錄，主代理先逐張檢視，再交給 user 看實際圖片簽核：每條規則白話意圖的每個子句都指得到對應子樹（SC-009）；
   在 `specs/002-rule-dsl-parser/validation.md` 記錄簽核結果與發現的問題，不把圖片 commit 進 repo。（depends on T029、T041）
 
@@ -226,7 +234,7 @@ flowchart TD
 - **US4 第一部分**: T027 → T028 → T029。T028 需要 CP4 的 checker 型別；T029 擴充 T025 的 `cli.py`。
 - **US3**: T030 與 (T031 + T032) → T033 → T034 → T035 → T036 → T037。T030 與 T009 同檔、T031 與 T010 同檔、T032 與 T016 同檔，
   T036 與 T029 都改 `test_rules_cli.py`，都在前一段完成後才動。
-- **US4 第二部分**: (T038 + T039) → T040；T041 → T042。T038 的覆蓋率測試需要 CP6 的整份語料可解析。
+- **US4 第二部分**: (T038 + T039) → T040；T048 → T041 → T042。T038 的覆蓋率測試需要 CP6 的整份語料可解析。
 - **Polish**: (T043 + T044) → T045 → T046 → T047（merge 後）。
 - 各段之間是串行：US2 的 checker 需要 US1 的 parser；語法樹圖需要 checker 的型別；US3 擴充同一組檔案；US4 第二部分需要整份語料。
   並行只發生在同一段內的不同檔案。`parser.py`、`checker.py`、`cli.py`、`test_rules_cli.py`、`rule_shapes.py`、`validation.md` 的修改都須序列化。
@@ -262,7 +270,7 @@ flowchart TD
 | FR-012 | T004、T006、T009、T013：正規序列化與 3 次決定性 |
 | FR-013 | T015–T016、T020、T022、T032：單位宣告與量綱檢查 |
 | FR-014 | T027、T028–T029、T042：語法樹 PNG |
-| FR-015 | T041：出處、白話橋接、產生式對照 |
+| FR-015 | T048、T041：術語表、出處、白話橋接、產生式對照 |
 | FR-016 | T001：fuzzer 不得引用 dsl；dsl 不得引用其他元件 |
 | SC-001 | T009、T012–T014：Gate「基本規則」7 條 |
 | SC-002–SC-004 | T030、T034–T037：「時序規則」13 條、「全語料」17 條，M1 完成於頂階 |
