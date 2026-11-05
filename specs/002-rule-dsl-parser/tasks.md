@@ -189,7 +189,8 @@
   一句定義與判準、不要混用的詞。M1 至少收：單位（`dimension`；判準是「能不能乘一個固定的數換過去」，`%` 是獨立的單位；「量綱」「因次」不用，「維度」另有所指）、
   維度（只指向量的分量：NED 三軸、`hnorm` 的兩軸）、`bool`／純量／向量、具名參數（`parameter`：規則集宣告、只帶單位不帶值，含門檻、持續時間、視窗長度、速率，
   比 spec 的「具名門檻」寬）、欄位（`field`）、衍生量（`derived`），以及 `src/assertion_engine/dsl/syntax.py` 的每種節點；「時間位移」（`Ago`、`Previous`；`Slope` 看 M3 的定義）
-  標為待定分類。給人讀的用詞在 review 時交 user 確認；不改 spec、research 等既有文件的用詞（要不要統一另行決定）。
+  標為待定分類。`Implies` 的詞條寫成「不允許 A 成立而 B 不成立；A 不成立時整條算成立」，不只寫「若 A 則 B」；另收「規則」：整棵樹必須算成真，算成假才是違規
+  （checker 只要求樹根是 `bool`，違規由 M2 評估）。給人讀的用詞在 review 時交 user 確認；不改 spec、research 等既有文件的用詞（要不要統一另行決定）。
   在 `tests/contract/test_glossary.py` 撰寫：`syntax.py` 的每個節點類別與名字的三種來源（`field`、`parameter`、`derived`）在 glossary 都有以程式識別字標示的詞條；
   在隔離 scratch copy 刪掉一個詞條，確認測試失敗在那個識別字上（FR-015）。
 - [ ] T041 [US4] 撰寫 `docs/algorithms/002-rule-dsl-parsing.md`：Pratt parser 與結合力的白話說明（Crafting Interpreters §17.6、Pratt 1973），每層一函式 recursive descent 的對照（同書 ch. 6）；
@@ -238,6 +239,71 @@ flowchart TD
 - **Polish**: (T043 + T044) → T045 → T046 → T047（merge 後）。
 - 各段之間是串行：US2 的 checker 需要 US1 的 parser；語法樹圖需要 checker 的型別；US3 擴充同一組檔案；US4 第二部分需要整份語料。
   並行只發生在同一段內的不同檔案。`parser.py`、`checker.py`、`cli.py`、`test_rules_cli.py`、`rule_shapes.py`、`validation.md` 的修改都須序列化。
+
+## Review units
+
+本段寫於 2026-11-05，晚於 T001–T040 的完成，只列未完成的任務；已完成任務的 review 記錄在 `validation.md` 與各 task 的 `[X]` commit。
+spec.md 的 Assumptions 早於 Checked／Unchecked 標記，沒有可對照的 `Unchecked` 項目。
+
+### Unit: 術語表
+
+- Tasks: T048
+- Outcome: `docs/glossary.md` 收齊 T048 列的詞條；`tests/contract/test_glossary.py` 在任一節點類別或名字來源缺詞條時失敗，指出缺的識別字。
+- Prerequisites: `syntax.py` 的節點類別與 checker 的三種名字來源已定（CP4、CP6）；不需要語法樹圖畫法定案。
+- Verification: `MPLBACKEND=Agg uv run pytest tests/contract/test_glossary.py`；在 scratch copy 刪一個詞條看到 RED。詞條內容與給人讀的用詞沒有機械檢查，由 reviewer 對照 T048 與 user 確認。
+- Review: `docs/glossary.md`、`tests/contract/test_glossary.py`、`specs/002-rule-dsl-parser/tasks.md` 的 T048。
+- Merge or split: 與 T041 分開——術語表單獨可驗收，T041 還等畫法定案；T041 只連過來。
+- Unchecked assumptions: none.
+
+### Unit: 白話橋接
+
+- Tasks: T041
+- Outcome: `docs/algorithms/002-rule-dsl-parsing.md` 涵蓋 T041 列的章節與對照表；5 個演算法模組的 docstring 引用對應章節。
+- Prerequisites: T048；語法樹圖畫法定案（「樹狀圖版面與 Reingold–Tilford 的差異」依畫法而定）。畫法若改，`tree_view.py` 的改動另成一個 unit，排在本 unit 之前。
+- Verification: 文件沒有 domain RED；reviewer 對照憲章原則 IV 與 T041 的清單，並確認 docstring 引用的章節存在。
+- Review: `docs/algorithms/002-rule-dsl-parsing.md`、`src/assertion_engine/dsl/{lexer,parser,checker,units,tree_view}.py` 的 module docstring。
+- Merge or split: 與 T042 分開——T042 只畫圖與簽核，沒有實作。
+- Unchecked assumptions: none.
+
+### Unit: 語法樹圖簽核 (verification-only)
+
+- Tasks: T042
+- Outcome: 17 張圖由 user 看實際圖片簽核，結果記在 `validation.md`。
+- Prerequisites: T041；畫法定案。
+- Verification: user 簽核；main 記錄。
+- Review: 無實作可審。
+- Merge or split: 只跑既有入口與寫記錄，照 verification-only 例外。
+- Unchecked assumptions: none.
+
+### Unit: README
+
+- Tasks: T043
+- Outcome: `README.md` 的套件表與 `assertion-rules` 用法反映 M1；M0 段落不動；術語連到 `docs/glossary.md`。
+- Prerequisites: T048。
+- Verification: 文件沒有 domain RED；reviewer 逐字跑 README 裡新增的指令，對照實際輸出。
+- Review: `README.md`。
+- Merge or split: 與 T044–T046 分開——那幾項只跑既有入口與寫記錄。
+- Unchecked assumptions: none.
+
+### Unit: 收尾驗收 (verification-only)
+
+- Tasks: T044、T045、T046
+- Outcome: quickstart 輸出、gate 咬合與 FR／SC 證據彙整都記在 `validation.md`，三個 gate 指令與 `change-gate` PASS。
+- Prerequisites: CP7、T043。
+- Verification: 各 task 列的指令與記錄。
+- Review: 無實作可審；T045 的注入只在隔離 worktree。
+- Merge or split: 同一個交付物（feature 驗收記錄）的互補檢查，合成一個 unit。
+- Unchecked assumptions: none.
+
+### Unit: merge 後交接 (verification-only)
+
+- Tasks: T047
+- Outcome: GAR-19、GAR-20 寫入交接事項並讀回，記錄在 `validation.md`。
+- Prerequisites: T046、merge。
+- Verification: Linear 讀回。
+- Review: 無實作可審。
+- Merge or split: 時點在 merge 之後，不能併進收尾驗收。
+- Unchecked assumptions: none.
 
 ## Parallel Examples
 
