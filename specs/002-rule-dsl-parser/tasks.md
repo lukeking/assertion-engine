@@ -205,7 +205,7 @@
 
 ## Phase 8: Polish & Cross-Cutting Concerns
 
-- [ ] T043 [P] 更新 `README.md`：套件表中 `dsl` 不再是保留邊界，改述 M1 的規則 DSL；加入 `assertion-rules` 的用法與 `rules/corpus.toml` 說明；M0 段落不動。
+- [-] T043 [P] 更新 `README.md`：套件表中 `dsl` 不再是保留邊界，改述 M1 的規則 DSL；加入 `assertion-rules` 的用法與 `rules/corpus.toml` 說明；M0 段落不動。
   同一個 unit 把 `docs/glossary.md` 寫法與型別裡的單字母（`c`、`d`、`x`、`w`、`a`、`b`、`D`）改成 `src/assertion_engine/dsl/syntax.py` 的欄位全名
   （例如 `held_for(condition, duration)`、`slope(value, window)`）與 `<單位>`：`d` 已同時指秒數與往下那一軸，`D` 又指任一單位（user 2026-11-05）。
 - [ ] T044 [P] 照 `specs/002-rule-dsl-parser/quickstart.md` 逐字執行每段指令，在 `specs/002-rule-dsl-parser/validation.md` 記錄實際輸出與 exit code。

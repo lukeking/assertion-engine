@@ -184,9 +184,11 @@
 
 ## 語法樹的節點
 
-每種節點一個詞條，順序照 `syntax.py` 的 `Node`。「寫法」是規則文字裡的樣子；「型別」照
-`specs/002-rule-dsl-parser/contracts/ruleset.md` 的 Type and dimension rules，其中的 `D` 代表任一單位，
-同一行裡的 `D` 指同一個單位。運算元（operand）是被運算的那個值。
+每種節點一個詞條，順序照 `syntax.py` 的 `Node`。「寫法」是規則文字裡的樣子；角括號框起來的部分（例如 `<condition>`）
+代表一個子節點，可以換成任何型別相符的運算式，角括號裡的字和 `syntax.py`、`specs/002-rule-dsl-parser/contracts/syntax-tree.md`
+對這個子節點的稱呼相同（`<else>` 在 `syntax.py` 寫作 `else_`）。「型別」照
+`specs/002-rule-dsl-parser/contracts/ruleset.md` 的 Type and dimension rules，其中的 `<單位>` 代表任一單位，
+同一行裡的 `<單位>` 指同一個單位。運算元（operand）是被運算的那個值。
 
 ### 數字常值（`Number`）
 
@@ -211,35 +213,35 @@
 
 ### 分量（`Component`）
 
-- 寫法：`x.n`、`x.e`、`x.d`。
+- 寫法：`<target>.n`、`<target>.e`、`<target>.d`。
 - 定義：取向量在一軸上的那個數：北（`n`）、東（`e`）或下（`d`）。
-- 型別：`vector[D]` 得到 `scalar[D]`。
+- 型別：`vector[<單位>]` 得到 `scalar[<單位>]`。
 - 例子：`velocity_ned_mps.d` 是往下的速度，也就是內建衍生量 `descent_speed_mps`。
 - 不要混用：`.d` 是往下，不是高度。往下為正，所以高度 `altitude_m` 是 `-position_ned_m.d`。
 
 ### 負號（`Negate`）
 
-- 寫法：`-x`。
+- 寫法：`-<operand>`。
 - 定義：把一個純量或向量變號，單位不變。
-- 型別：`scalar[D]` 得到 `scalar[D]`；`vector[D]` 得到 `vector[D]`。
+- 型別：`scalar[<單位>]` 得到 `scalar[<單位>]`；`vector[<單位>]` 得到 `vector[<單位>]`。
 - 例子：`-slope(battery_percent, drain_window_s)`（`battery-drain-rate`）：電量的變化率取負號，成為耗電率，電量在掉時是正數。
 - 不要混用：同一個 `-`，只有一個運算元時是 `Negate`；夾在兩個運算元中間是 `Arithmetic` 的減法。
 
 ### 四則運算（`Arithmetic`）
 
-- 寫法：`a + b`、`a - b`、`a * b`、`a / b`。
+- 寫法：`<left> + <right>`、`<left> - <right>`、`<left> * <right>`、`<left> / <right>`。
 - 定義：兩個運算元的加減乘除。
 - 型別：
   - `+`、`-`：兩邊都是純量或都是向量，單位相同，結果保留那個單位。
   - `*`：純量乘純量、向量乘純量、純量乘向量，單位相乘；兩個向量不能相乘。
   - `/`：純量除以純量、向量除以純量，單位相除。
-- 判準：同一層連寫時從左邊先組，`a - b - c` 是 `(a - b) - c`。
+- 判準：同一層連寫時從左邊先組，`10 - 4 - 3` 是 `(10 - 4) - 3`：`10 - 4` 整個是 `<left>`。
 - 例子：`return_time_s * drain_rate_percent_per_s + return_reserve_percent`（`return-reserve`）：`s` 乘 `%/s` 得 `%`，再加 `%`。
 - 不要混用：只有一個運算元的 `-` 是負號，見 `Negate`。
 
 ### 比較（`Compare`）
 
-- 寫法：`a < b`、`a <= b`、`a > b`、`a >= b`、`a == b`、`a != b`。
+- 寫法：`<left> < <right>`、`<left> <= <right>`、`<left> > <right>`、`<left> >= <right>`、`<left> == <right>`、`<left> != <right>`。
 - 定義：比較兩個純量，得到真或假。
 - 型別：兩個同單位的純量得到 `bool`；向量不能比較。
 - 例子：`battery_percent >= battery_floor_percent`（`battery-floor`）。
@@ -247,22 +249,22 @@
 
 ### 且（`And`）
 
-- 寫法：`a and b`。
+- 寫法：`<left> and <right>`。
 - 定義：兩邊都成立才成立。
 - 型別：兩個 `bool` 得到 `bool`。
-- 判準：連寫時從左邊先組，`a and b and c` 是 `(a and b) and c`。
+- 判準：連寫時從左邊先組：三個條件以 `and` 連寫時，前兩個先組成 `<left>`，第三個是 `<right>`。
 - 例子：`home_distance_m <= fence_radius_m and altitude_m <= fence_altitude_m`（`geofence-cylinder`）。
 - 不要混用：「或」「非」（`or`、`not`）不在 M1 的文法裡，只先登記為保留字（不能拿來當名稱的字）。
 
 ### 蘊涵（`Implies`）
 
-- 寫法：`A implies B`。
+- 寫法：`A implies B`；A、B 在 `syntax.py` 裡是 `antecedent`、`consequent`。
 - 定義：不允許 A 成立而 B 不成立；A 不成立時整條算成立。
 - 判準，三種情況：
   - A 真、B 真：真。
   - A 真、B 假：假，這是唯一算成假的情況。
   - A 假：真，不論 B。
-- 型別：兩個 `bool` 得到 `bool`。連寫時從右邊先組，`a implies b implies c` 是 `a implies (b implies c)`。
+- 型別：兩個 `bool` 得到 `bool`。連寫時從右邊先組：三個條件以 `implies` 連寫時，第一個是 A，後兩個先組成 B。
 - 邏輯上的名稱是實質蘊涵（material implication），等同「非 A 或 B」。
 - 例子：`battery_percent < battery_low_percent implies home_distance_m <= low_battery_radius_m`（`low-battery-stay-close`）：
   電量低時，離家水平距離不得超過 `low_battery_radius_m`；電量不低時，這條不管距離，整條算成立。
@@ -271,18 +273,18 @@
 
 ### 條件式（`Conditional`）
 
-- 寫法：`if c then a else b`。
-- 定義：`c` 成立時取 `a`，否則取 `b`。
-- 型別：`c` 是 `bool`；`a`、`b` 的型別與單位相同，結果就是那個型別。
+- 寫法：`if <condition> then <then> else <else>`。
+- 定義：`<condition>` 成立時取 `<then>`，否則取 `<else>`。
+- 型別：`<condition>` 是 `bool`；`<then>`、`<else>` 的型別與單位相同，結果就是那個型別。
 - 例子：`descent_speed_mps <= (if altitude_m < near_ground_altitude_m then near_ground_descent_max_mps else descent_max_mps)`
   （`descent-speed-near-ground`）：近地時用較嚴的下降速度上限，其餘高度用一般的上限。
 - 不要混用：和 `Implies` 不同。條件式從兩個值挑一個，結果可以是純量；`implies` 的兩邊與結果都是 `bool`。research 稱它「條件值」。
 
 ### 函式呼叫（`Call`）
 
-- 寫法：`norm(x)`、`hnorm(x)`。
+- 寫法：`norm(<arguments>)`、`hnorm(<arguments>)`。
 - 定義：把括號裡的值（引數）交給一個內建函式計算。
-- 型別：M1 只有兩個函式，都是 `vector[D]` 得到 `scalar[D]`：
+- 型別：M1 只有兩個函式，都收一個引數，`vector[<單位>]` 得到 `scalar[<單位>]`：
   - `norm`：用北、東、下三軸算向量的長度。
   - `hnorm`：只用北、東兩軸，算水平長度 `sqrt(n^2 + e^2)`。
 - 判準：引數個數不對是 `arity_mismatch`；函式名不存在是 `unknown_name`。
@@ -292,39 +294,39 @@
 
 ### 前一筆（`Previous`）
 
-- 寫法：`prev(x)`。
+- 寫法：`prev(<value>)`。
 - 定義：同一個量在前一筆事件（一筆遙測）時的值。
-- 型別：和 `x` 相同。
+- 型別：和 `<value>` 相同。
 - 判準：數的是事件，不是秒；前一筆離現在多久，要看兩筆之間隔了多少時間。
 - 例子：`mission_time_s - prev(mission_time_s) <= heartbeat_max_s`（`telemetry-heartbeat`）：相鄰兩筆的時間差不得超過上限。
 - 待定：第一筆事件沒有前一筆，這時怎麼算由 M2 定義。
-- 不要混用：`ago(x, d)` 往回數的是秒，見 `Ago`。
+- 不要混用：`ago(<value>, <duration>)` 往回數的是秒，見 `Ago`。
 
 ### N 秒前（`Ago`）
 
-- 寫法：`ago(x, d)`。
-- 定義：同一個量在 `d` 秒前的值。
-- 型別：和 `x` 相同；`d` 必須是 `scalar[s]`。
+- 寫法：`ago(<value>, <duration>)`。
+- 定義：同一個量在 `<duration>` 秒前的值。
+- 型別：和 `<value>` 相同；`<duration>` 必須是 `scalar[s]`。
 - 例子：`home_distance_m < ago(home_distance_m, closing_window_s)`（`battery-tier-low`）：離家距離比 `closing_window_s` 秒前短，
   也就是正在縮短。
-- 待定：精確算法（例如資料還不到 `d` 秒時）由 M2／M3 定義。
-- 不要混用：`prev(x)` 往回數的是事件，見 `Previous`。
+- 待定：精確算法（例如資料還不到 `<duration>` 秒時）由 M2／M3 定義。
+- 不要混用：`prev(<value>)` 往回數的是事件，見 `Previous`。
 
 ### 持續成立（`HeldFor`）
 
-- 寫法：`held_for(c, d)`。
-- 定義：條件 `c` 已經持續成立 `d` 秒。
-- 型別：`c` 是 `bool`，`d` 是 `scalar[s]`，結果是 `bool`。
+- 寫法：`held_for(<condition>, <duration>)`。
+- 定義：條件 `<condition>` 已經持續成立 `<duration>` 秒。
+- 型別：`<condition>` 是 `bool`，`<duration>` 是 `scalar[s]`，結果是 `bool`。
 - 例子：`held_for(battery_percent < battery_low_percent, reaction_time_s)`（`battery-tier-low`）：電量低於門檻持續 `reaction_time_s` 秒。
-- 待定：是不是「至少」`d` 秒、中途短暫不成立算不算重新計時，由 M2／M3 定義。
+- 待定：是不是「至少」`<duration>` 秒、中途短暫不成立算不算重新計時，由 M2／M3 定義。
 - 不要混用：「持續成立」和「N 秒內成立」（`Within`）是不同形狀；後者要到期限才知道有沒有違規
   （`specs/002-rule-dsl-parser/rule-corpus.md` 的 `battery-tier-emergency`）。
 
 ### N 秒內成立（`Within`）
 
-- 寫法：`within(c, d)`。
-- 定義：條件 `c` 在 `d` 秒的期限內成立。
-- 型別：`c` 是 `bool`，`d` 是 `scalar[s]`，結果是 `bool`。
+- 寫法：`within(<condition>, <duration>)`。
+- 定義：條件 `<condition>` 在 `<duration>` 秒的期限內成立。
+- 型別：`<condition>` 是 `bool`，`<duration>` 是 `scalar[s]`，結果是 `bool`。
 - 例子：`battery_percent < battery_emergency_percent implies within(altitude_m < landed_altitude_m, landing_deadline_s)`
   （`battery-tier-emergency`）：電量一跌破緊急門檻，必須在 `landing_deadline_s` 秒內落地（高度低於 `landed_altitude_m`）。
 - 待定：從哪一刻起算、什麼時候判定，由 M2／M3 定義。
@@ -332,18 +334,19 @@
 
 ### 視窗斜率（`Slope`）
 
-- 寫法：`slope(x, w)`。
-- 定義：`x` 在最近 `w` 秒的視窗（最近一段固定長度的資料）裡的平均變化率。
-- 型別：`x` 是 `scalar[D]`，`w` 是 `scalar[s]`，結果是 `scalar[D/s]`；例如 `%` 的斜率是 `%/s`。
+- 寫法：`slope(<value>, <window>)`。
+- 定義：`<value>` 在最近 `<window>` 秒的視窗（最近一段固定長度的資料）裡的平均變化率。
+- 型別：`<value>` 是 `scalar[<單位>]`，`<window>` 是 `scalar[s]`，結果是 `scalar[<單位>/s]`；例如 `%` 的斜率是 `%/s`。
 - 例子：`-slope(battery_percent, drain_window_s) <= drain_rate_max_percent_per_s`（`battery-drain-rate`）：最近一段時間的平均耗電率不得超過上限。
 - 待定：平均變化率怎麼算（取視窗兩端的差，或對視窗裡每一筆做迴歸，也就是找一條最貼近這些點的直線、取它的斜率），
   以及視窗還沒填滿時怎麼算，由 M3（GAR-20）定義。
-- 不要混用：斜率只由 `x` 過去的值算出，不讀速度欄位；`slope(altitude_m, w)` 和 `descent_speed_mps` 不是同一個量。
+- 不要混用：斜率只由 `<value>` 過去的值算出，不讀速度欄位；`slope(altitude_m, <window>)` 和 `descent_speed_mps` 不是同一個量。
 
 ### 時間位移（待定分類）
 
 - 定義（暫定）：取同一個量在較早時間點的值。`Ago` 往回數秒，`Previous` 往回數事件。
 - 類比：SQL（資料庫查詢語言）的 `LAG()`、pandas（Python 的資料表套件）的 `shift()`，都是取同一欄較早的值。
-- `Slope` 歸不歸入：若 M3 把 `slope(x, w)` 定義成視窗兩端的差除以視窗長度，它就等於 `(x - ago(x, w)) / w`，可以歸入；
+- `Slope` 歸不歸入：若 M3 把 `slope(<value>, <window>)` 定義成視窗兩端的差除以視窗長度，它就等於
+  `(<value> - ago(<value>, <window>)) / <window>`，可以歸入；
   若定義成迴歸，就不是。
 - 待定：這個分類由 user 提出，尚未定案；`Slope` 的歸屬等 M3 定義 `slope` 的算法後再決定。

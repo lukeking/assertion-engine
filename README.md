@@ -9,6 +9,10 @@ coordinates. M0 does not model raw GPS/IMU readings, sensor fusion, noise or
 estimator fidelity. DSL parsing, rule evaluation, sliding windows, alerts, stream
 ingestion, Fuzzer injection and hardware connections are outside M0.
 
+M1 adds a rule DSL for telemetry assertions. It parses and checks the versioned
+rule set in `rules/corpus.toml` but does not evaluate rules; see
+[Check and inspect rules](#check-and-inspect-rules).
+
 ## Responsibilities
 
 | Location | Responsibility |
@@ -16,11 +20,13 @@ ingestion, Fuzzer injection and hardware connections are outside M0.
 | `src/assertion_engine/telemetry.py` and `artifacts.py` | Shared immutable data types, offline schema/semantic validation and canonical serialization. |
 | `src/assertion_engine/simulator/` | Validate TOML scenarios, generate the mission and publish a complete artifact pair. |
 | `src/assertion_engine/playback/` | Validate and view completed artifacts; controls change only the cursor and wall-clock playback rate. It does not depend on the Simulator or regenerate, smooth or interpolate mission state. |
-| `src/assertion_engine/dsl/` | Reserved package boundary for future grammar and parsing; no M0 behavior. |
+| `src/assertion_engine/dsl/` | M1 rule DSL: load a TOML rule set, parse each rule into a syntax tree, check its names, types and units, and draw the tree. The `assertion-rules` CLI runs `check`, `dump` and `tree`. It does not evaluate rules. Architecture checks prohibit imports from Simulator, Playback, Evaluator and Fuzzer. |
 | `src/assertion_engine/evaluator/` | Reserved package boundary for future rule evaluation; no M0 behavior. |
 | `src/assertion_engine/fuzzer/` | Reserved package boundary for future adversarial inputs; no M0 behavior. Architecture checks prohibit imports from DSL and Evaluator. |
 | `scenarios/` | Human-authored, versioned TOML inputs with an explicit seed; `normal-flight.toml` is the baseline. |
+| `rules/` | Human-authored, versioned TOML rule sets; `corpus.toml` is the M1 rule corpus. |
 | `tests/` | Unit, contract, integration and architecture checks, including fixed negative fixtures, three-run byte equality and read-only playback checks. Generated test files use pytest `tmp_path`. |
+| `docs/glossary.md` | The one place project terms are defined, in Traditional Chinese. |
 
 ## Environment
 
@@ -95,6 +101,50 @@ decimal places with ties to even; normalized source parameters retain their inpu
 precision. Run-specific timestamps, paths and UUIDs are excluded. See the
 [data model](specs/001-telemetry-simulator/data-model.md) for exact sampling,
 canonical bytes and legacy ground-truth migration.
+
+## Check and inspect rules
+
+`rules/corpus.toml` is the versioned M1 rule set. It declares named parameters,
+which carry a unit but no value, derived quantities computed by an expression, and
+rules, each a boolean expression with a short name and a category. Terms such as
+syntax tree, named parameter, derived quantity and unit are defined in the
+[glossary](docs/glossary.md), written in Traditional Chinese.
+
+Check the whole rule set:
+
+```bash
+uv run assertion-rules check --ruleset rules/corpus.toml
+```
+
+The command parses every rule and checks its names and units against the telemetry
+fields, named parameters and derived quantities. Stdout reports
+`ok: 17 rules, 1 derived, 27 parameters`; the derived count excludes the four
+built-in derived quantities. Every command loads and checks the whole rule set
+first: an invalid rule set prints one diagnostic with its position and error code
+to stderr and exits 1.
+
+Print one rule's canonical syntax tree as JSON:
+
+```bash
+uv run assertion-rules dump --ruleset rules/corpus.toml --rule battery-floor
+```
+
+Render a rule's syntax tree to a PNG in a new temporary directory:
+
+```bash
+out="$(mktemp -d)"
+uv run assertion-rules tree --ruleset rules/corpus.toml --rule battery-runout-forecast \
+  --output "$out/battery-runout-forecast.png"
+```
+
+Each box shows the node kind, its source fragment and its checked type, and for a
+name also where it comes from; the glossary section 讀語法樹圖的方框 explains each
+line. Rendering needs no display. The output's parent directory must already
+exist, and an existing file is never overwritten. An unknown rule or an existing
+output exits 2. See the [quickstart](specs/002-rule-dsl-parser/quickstart.md)
+for a rejected rule set and the
+[CLI contract](specs/002-rule-dsl-parser/contracts/cli.md) for output formats and
+exit codes.
 
 ## Local change gate
 
