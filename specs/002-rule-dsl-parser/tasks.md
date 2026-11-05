@@ -196,7 +196,8 @@
 - [ ] T041 [US4] 撰寫 `docs/algorithms/002-rule-dsl-parsing.md`：Pratt parser 與結合力的白話說明（Crafting Interpreters §17.6、Pratt 1973），每層一函式 recursive descent 的對照（同書 ch. 6）；
   5 個時間保留字與 MTL 有界運算子的對應（Koymans 1990）；量綱的定義（BIPM SI 手冊 §2.3.3）與 `%` 作為專案基本量的取捨；樹狀圖版面與 Reingold–Tilford 的差異；
   grammar.ebnf 每條產生式 ↔ parser handler 的對照表；在 T011、T012、T022、T020、T028 的 module docstring 引用對應章節（FR-015）。
-  術語只連到 `docs/glossary.md`，不在本文件另寫定義。（depends on T048）
+  術語只連到 `docs/glossary.md`，不在本文件另寫定義；本文件用到而術語表還沒有的詞（例如結合力、產生式、Pratt parser、recursive descent、MTL），
+  在同一個 unit 加進 `docs/glossary.md`（user 2026-11-05）。（depends on T048）
 - [ ] T042 [US4] 以 `assertion-rules tree` 把 17 條語料規則的圖畫到 `mktemp -d` 的目錄，主代理先逐張檢視，再交給 user 看實際圖片簽核：每條規則白話意圖的每個子句都指得到對應子樹（SC-009）；
   在 `specs/002-rule-dsl-parser/validation.md` 記錄簽核結果與發現的問題，不把圖片 commit 進 repo。（depends on T029、T041）
 
@@ -258,10 +259,11 @@ spec.md 的 Assumptions 早於 Checked／Unchecked 標記，沒有可對照的 `
 ### Unit: 白話橋接
 
 - Tasks: T041
-- Outcome: `docs/algorithms/002-rule-dsl-parsing.md` 涵蓋 T041 列的章節與對照表；5 個演算法模組的 docstring 引用對應章節。
-- Prerequisites: T048；語法樹圖畫法定案（「樹狀圖版面與 Reingold–Tilford 的差異」依畫法而定）。畫法若改，`tree_view.py` 的改動另成一個 unit，排在本 unit 之前。
-- Verification: 文件沒有 domain RED；reviewer 對照憲章原則 IV 與 T041 的清單，並確認 docstring 引用的章節存在。
-- Review: `docs/algorithms/002-rule-dsl-parsing.md`、`src/assertion_engine/dsl/{lexer,parser,checker,units,tree_view}.py` 的 module docstring。
+- Outcome: `docs/algorithms/002-rule-dsl-parsing.md` 涵蓋 T041 列的章節與對照表；5 個演算法模組的 docstring 引用對應章節；文件用到的新詞都有 `docs/glossary.md` 的詞條。
+- Prerequisites: T048；語法樹圖畫法定案（「樹狀圖版面與 Reingold–Tilford 的差異」依畫法而定）。畫法若改，`tree_view.py` 的改動另成一個 unit，排在本 unit 之前；
+  那個 unit 也要更新 `docs/glossary.md` 的「讀語法樹圖的方框」。
+- Verification: 文件沒有 domain RED；reviewer 對照憲章原則 IV 與 T041 的清單，並確認 docstring 引用的章節存在；`tests/contract/test_glossary.py` 照樣通過。
+- Review: `docs/algorithms/002-rule-dsl-parsing.md`、`docs/glossary.md` 的新增詞條、`src/assertion_engine/dsl/{lexer,parser,checker,units,tree_view}.py` 的 module docstring。
 - Merge or split: 與 T042 分開——T042 只畫圖與簽核，沒有實作。
 - Unchecked assumptions: none.
 
