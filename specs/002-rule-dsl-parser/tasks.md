@@ -185,7 +185,7 @@
 - [X] T040 [US4] 執行 T038、T039；若通過時沒有經過 RED，在隔離 scratch copy 分別刪掉 `specs/002-rule-dsl-parser/contracts/grammar.ebnf` 一條 `used by:`、
   在 `src/assertion_engine/dsl/parser.py` 加一個語料沒用到的構造、改錯一個結合力，確認未修改的測試各自失敗在對的斷言上；
   修正 `src/assertion_engine/dsl/parser.py` 或 `specs/002-rule-dsl-parser/contracts/grammar.ebnf` 直到兩個測試在主工作區通過。（depends on T038、T039、CP6）
-- [ ] T048 [US4] 撰寫 `docs/glossary.md`：跨里程碑的術語表，是術語定義的唯一位置，演算法文件與 README 只連過去。每個詞條含給人讀的說法、程式識別字（inline code）、
+- [-] T048 [US4] 撰寫 `docs/glossary.md`：跨里程碑的術語表，是術語定義的唯一位置，演算法文件與 README 只連過去。每個詞條含給人讀的說法、程式識別字（inline code）、
   一句定義與判準、不要混用的詞。M1 至少收：單位（`dimension`；判準是「能不能乘一個固定的數換過去」，`%` 是獨立的單位；「量綱」「因次」不用，「維度」另有所指）、
   維度（只指向量的分量：NED 三軸、`hnorm` 的兩軸）、`bool`／純量／向量、具名參數（`parameter`：規則集宣告、只帶單位不帶值，含門檻、持續時間、視窗長度、速率，
   比 spec 的「具名門檻」寬）、欄位（`field`）、衍生量（`derived`），以及 `src/assertion_engine/dsl/syntax.py` 的每種節點；「時間位移」（`Ago`、`Previous`；`Slope` 看 M3 的定義）
