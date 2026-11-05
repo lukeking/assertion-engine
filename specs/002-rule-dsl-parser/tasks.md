@@ -213,7 +213,8 @@
   不是 Ruff、import 或環境錯誤；在 `specs/002-rule-dsl-parser/validation.md` 記錄受測 commit、mutation、runner 摘要與乾淨版本 PASS，不改主工作區 source。（depends on CP7）
 - [ ] T046 在 `specs/002-rule-dsl-parser/validation.md` 彙整 FR-001～FR-016 與 SC-001～SC-009 的證據；重跑 `uv run ruff format --check .`、`uv run ruff check .`、`MPLBACKEND=Agg uv run pytest`，
   並確認 PR 的 `change-gate` check PASS；只有實作、review 與主代理複驗都完成才翻轉相應任務標記。（depends on T043–T045）
-- [ ] T047 merge 後，把 spec Scope Boundaries 交給後續里程碑的事項寫進 Linear：GAR-19 收降落衝突、資料斷流偵測、第一筆無前一筆與時間差為 0；
+- [ ] T047 merge 後，把 spec Scope Boundaries 交給後續里程碑的事項寫進 Linear：GAR-19 收降落衝突、資料斷流偵測、第一筆無前一筆與時間差為 0，
+  以及 `README.md`「Provisional latency ladder」一節在 M2 改寫（它仍寫 M0 沒有規則；README 只寫程式現在能做什麼，在改變它的 feature PR 裡更新，進度只記在 Linear，user 2026-11-05）；
   GAR-20 收視窗未填滿；各附本 spec 與 PR 連結，讀回 issue 確認寫入（spec-closeout「Refresh downstream items」）。記錄寫在 `specs/002-rule-dsl-parser/validation.md`。（depends on T046、merge）
 
 **Checkpoint CP8**: 三階驗收、無效規則集、覆蓋率、咬合、視覺簽核與 quickstart 都有可重跑的證據；feature 進入 PR ready／closeout。
