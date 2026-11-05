@@ -206,6 +206,8 @@
 ## Phase 8: Polish & Cross-Cutting Concerns
 
 - [ ] T043 [P] 更新 `README.md`：套件表中 `dsl` 不再是保留邊界，改述 M1 的規則 DSL；加入 `assertion-rules` 的用法與 `rules/corpus.toml` 說明；M0 段落不動。
+  同一個 unit 把 `docs/glossary.md` 寫法與型別裡的單字母（`c`、`d`、`x`、`w`、`a`、`b`、`D`）改成 `src/assertion_engine/dsl/syntax.py` 的欄位全名
+  （例如 `held_for(condition, duration)`、`slope(value, window)`）與 `<單位>`：`d` 已同時指秒數與往下那一軸，`D` 又指任一單位（user 2026-11-05）。
 - [ ] T044 [P] 照 `specs/002-rule-dsl-parser/quickstart.md` 逐字執行每段指令，在 `specs/002-rule-dsl-parser/validation.md` 記錄實際輸出與 exit code。
 - [ ] T045 在兩個隔離 worktree 分別注入（a）一個優先序錯誤、（b）一條量綱規則錯誤（例如允許 `%` 與 `m` 比較），執行未修改的 gate，確認失敗來自 SC-007 與 SC-005 的對應測試，
   不是 Ruff、import 或環境錯誤；在 `specs/002-rule-dsl-parser/validation.md` 記錄受測 commit、mutation、runner 摘要與乾淨版本 PASS，不改主工作區 source。（depends on CP7）
@@ -281,10 +283,12 @@ spec.md 的 Assumptions 早於 Checked／Unchecked 標記，沒有可對照的 `
 
 - Tasks: T043
 - Outcome: `README.md` 的套件表與 `assertion-rules` 用法反映 M1；M0 段落不動；術語連到 `docs/glossary.md`。
+  術語表的寫法與型別不再有單字母，名稱都對得到 `syntax.py` 的欄位。
 - Prerequisites: T048。
-- Verification: 文件沒有 domain RED；reviewer 逐字跑 README 裡新增的指令，對照實際輸出。
-- Review: `README.md`。
-- Merge or split: 與 T044–T046 分開——那幾項只跑既有入口與寫記錄。
+- Verification: 文件沒有 domain RED；reviewer 逐字跑 README 裡新增的指令，對照實際輸出，並逐一對照術語表的寫法與 `syntax.py` 的欄位；
+  `tests/contract/test_glossary.py` 照樣通過。
+- Review: `README.md`、`docs/glossary.md` 的寫法與型別行。
+- Merge or split: 與 T044–T046 分開——那幾項只跑既有入口與寫記錄。術語表的單字母併進這裡，是兩者都是給人讀的文件、共用一輪 review（user 2026-11-05）。
 - Unchecked assumptions: none.
 
 ### Unit: 收尾驗收 (verification-only)
