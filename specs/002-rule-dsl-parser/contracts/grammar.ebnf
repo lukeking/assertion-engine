@@ -1,0 +1,131 @@
+(* M1 rule expression grammar — contract for src/assertion_engine/dsl/parser.py
+
+   Notation: ISO EBNF style. "x" terminal, { } zero or more, [ ] optional, | alternative.
+   One rule's `expression` string from a rule set (contracts/ruleset.md) is parsed by `rule_body`.
+
+   Each production below carries two annotations that tests read:
+     builds:  the syntax-tree node kind(s) the production constructs (contracts/syntax-tree.md);
+              "none" means it groups without building a node.
+     used by: corpus rule short names (rules/corpus.toml) or derived names that need it.
+   SC-006: parsing every corpus rule and derived definition must exercise exactly the 17 productions
+   that carry a `used by:` annotation — no production without a corpus need, no construct outside
+   this file. The other 8 (rule_body, expression, primary, temporal, compare_op, axis, name_start,
+   arguments) are structural: they have no construct of their own and are not counted.
+
+   Precedence levels, loosest first. Pratt binding powers in parser.py MUST list these levels
+   in this order, one table row per level (research.md Decision 3):
+     1 conditional   2 implication   3 conjunction   4 comparison
+     5 additive      6 multiplicative 7 unary        8 postfix
+*)
+
+rule_body      = expression , end_of_input ;
+                 (* builds: none — the root is the node built by `expression` *)
+
+expression     = conditional | implication ;
+                 (* builds: none *)
+
+(* level 1 *)
+conditional    = "if" , expression , "then" , expression , "else" , expression ;
+                 (* builds: Conditional
+                    used by: descent-speed-near-ground
+                    The else-branch extends as far right as possible. Inside a comparison
+                    operand the conditional must be parenthesized (see `grouping`). *)
+
+(* level 2 — right-associative *)
+implication    = conjunction , [ "implies" , implication ] ;
+                 (* builds: Implies when "implies" is present
+                    used by: low-battery-stay-close, battery-tier-low, battery-tier-critical,
+                             battery-tier-emergency *)
+
+(* level 3 — left-associative *)
+conjunction    = comparison , { "and" , comparison } ;
+                 (* builds: And when "and" is present
+                    used by: geofence-cylinder, monotonic-sequence *)
+
+(* level 4 — non-associative: a second comparison operator is error chained_comparison *)
+comparison     = additive , [ compare_op , additive ] ;
+                 (* builds: Compare when compare_op is present
+                    used by: every corpus rule *)
+compare_op     = "<" | "<=" | ">" | ">=" | "==" | "!=" ;
+
+(* level 5 — left-associative *)
+additive       = multiplicative , { ( "+" | "-" ) , multiplicative } ;
+                 (* builds: Arithmetic (op "+" or "-")
+                    used by: return-reserve, telemetry-heartbeat, monotonic-sequence,
+                             no-sudden-jump, battery-runout-forecast, altitude-trend-ceiling,
+                             geofence-forecast, return_time_s *)
+
+(* level 6 — left-associative *)
+multiplicative = unary , { ( "*" | "/" ) , unary } ;
+                 (* builds: Arithmetic (op "*" or "/")
+                    used by: return-reserve, no-sudden-jump, battery-runout-forecast,
+                             altitude-trend-ceiling, geofence-forecast, return_time_s *)
+
+(* level 7 *)
+unary          = "-" , unary | postfix ;
+                 (* builds: Negate when "-" is present
+                    used by: battery-drain-rate, battery-runout-forecast, altitude_m *)
+
+(* level 8 — left-associative *)
+postfix        = primary , { "." , axis } ;
+                 (* builds: Component when "." is present
+                    used by: altitude_m, descent_speed_mps *)
+axis           = "n" | "e" | "d" ;
+                 (* "n", "e", "d" are axis names only after "."; elsewhere they are ordinary names. *)
+
+primary        = number | temporal | call | name | grouping ;
+                 (* builds: none *)
+
+number         = digit , { digit } , [ "." , digit , { digit } ] ;
+                 (* builds: Number
+                    used by: monotonic-sequence ("1"), battery-tier-critical ("0") *)
+
+name           = name_start , { name_start | digit } ;
+                 (* builds: Name
+                    used by: every corpus rule
+                    A name may not be a keyword or a reserved word (see below). *)
+name_start     = "a" | … | "z" | "A" | … | "Z" | "_" ;
+
+call           = name , "(" , arguments , ")" ;
+                 (* builds: Call
+                    used by: no-sudden-jump (norm), geofence-forecast (hnorm),
+                             horizontal_speed_mps, home_distance_m (hnorm) *)
+arguments      = expression , { "," , expression } ;
+
+grouping       = "(" , expression , ")" ;
+                 (* builds: none — parentheses change the tree shape but leave no node
+                    used by: descent-speed-near-ground, no-sudden-jump, battery-runout-forecast *)
+
+temporal       = previous | ago | held_for | within | slope ;
+                 (* builds: none *)
+
+previous       = "prev" , "(" , expression , ")" ;
+                 (* builds: Previous
+                    used by: telemetry-heartbeat, monotonic-sequence, no-sudden-jump *)
+
+ago            = "ago" , "(" , expression , "," , expression , ")" ;
+                 (* builds: Ago (value, duration)
+                    used by: battery-tier-low *)
+
+held_for       = "held_for" , "(" , expression , "," , expression , ")" ;
+                 (* builds: HeldFor (condition, duration)
+                    used by: battery-tier-low, battery-tier-critical *)
+
+within         = "within" , "(" , expression , "," , expression , ")" ;
+                 (* builds: Within (condition, duration)
+                    used by: battery-tier-emergency *)
+
+slope          = "slope" , "(" , expression , "," , expression , ")" ;
+                 (* builds: Slope (value, window)
+                    used by: battery-drain-rate, battery-runout-forecast, altitude-trend-ceiling *)
+
+(* Lexical notes
+   - Whitespace (space, tab, newline) separates tokens and is otherwise ignored. No comments.
+   - Keywords: if then else implies and prev ago held_for within slope
+   - Reserved words (no production in M1; using one is error reserved_word):  or not
+   - Only ASCII is accepted; any other character is error invalid_character.
+   - A number immediately followed by a letter or "." without a digit (e.g. "1e3", "2.") is
+     error invalid_number. There is no leading "+" and no exponent form.
+   - Nesting deeper than 100 operand levels (each parenthesized group, prefix "-", call or
+     temporal argument, conditional branch and infix right operand opens one) is error
+     nesting_too_deep (data-model.md "Parse depth limit"). *)

@@ -1,0 +1,1 @@
+{"rule":"altitude-ceiling","tree":{"kind":"Compare","left":{"kind":"Name","name":"altitude_m","span":[1,1,1,11]},"op":"<=","right":{"kind":"Name","name":"altitude_ceiling_m","span":[1,15,1,33]},"span":[1,1,1,33]}}

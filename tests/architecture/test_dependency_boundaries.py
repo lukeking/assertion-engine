@@ -7,8 +7,14 @@ from pathlib import Path
 import pytest
 
 PACKAGE_ROOT = Path(__file__).resolve().parents[2] / "src" / "assertion_engine"
-RESERVED_PACKAGES = ("dsl", "evaluator", "fuzzer")
+RESERVED_PACKAGES = ("evaluator", "fuzzer")
 FORBIDDEN_DEPENDENCIES = {
+    "dsl": (
+        "assertion_engine.evaluator",
+        "assertion_engine.fuzzer",
+        "assertion_engine.simulator",
+        "assertion_engine.playback",
+    ),
     "fuzzer": ("assertion_engine.dsl", "assertion_engine.evaluator"),
     "playback": ("assertion_engine.simulator",),
 }
@@ -70,7 +76,7 @@ def reserved_behavior_violations(package_root: Path) -> list[tuple[str, int, str
 def source_tree(tmp_path: Path, relative_path: str, source: str) -> Path:
     """Write source fixtures only beneath pytest's explicit temporary directory."""
     package_root = tmp_path / "src" / "assertion_engine"
-    for name in (*RESERVED_PACKAGES, "playback", "simulator"):
+    for name in (*RESERVED_PACKAGES, "dsl", "playback", "simulator"):
         directory = package_root / name
         directory.mkdir(parents=True, exist_ok=True)
         (directory / "__init__.py").write_text("", encoding="utf-8")
@@ -222,6 +228,60 @@ def source_tree(tmp_path: Path, relative_path: str, source: str) -> Path:
             2,
             "assertion_engine.simulator.config",
         ),
+        (
+            "dsl/checker.py",
+            "import assertion_engine.evaluator",
+            1,
+            "assertion_engine.evaluator",
+        ),
+        (
+            "dsl/checker.py",
+            "from assertion_engine.evaluator.semantics import evaluate",
+            1,
+            "assertion_engine.evaluator.semantics.evaluate",
+        ),
+        (
+            "dsl/checker.py",
+            "from .. import evaluator as semantics",
+            1,
+            "assertion_engine.evaluator",
+        ),
+        (
+            "dsl/nested/__init__.py",
+            "from ...evaluator import semantics",
+            1,
+            "assertion_engine.evaluator.semantics",
+        ),
+        (
+            "dsl/tree_view.py",
+            "import assertion_engine.playback.view as render",
+            1,
+            "assertion_engine.playback.view",
+        ),
+        (
+            "dsl/tree_view.py",
+            "from assertion_engine import playback",
+            1,
+            "assertion_engine.playback",
+        ),
+        (
+            "dsl/tree_view.py",
+            "from ..playback import view",
+            1,
+            "assertion_engine.playback.view",
+        ),
+        (
+            "dsl/parser.py",
+            "from assertion_engine import fuzzer",
+            1,
+            "assertion_engine.fuzzer",
+        ),
+        (
+            "dsl/parser.py",
+            "from ..simulator import config",
+            1,
+            "assertion_engine.simulator.config",
+        ),
     ],
 )
 def test_FR016_scanner_rejects_forbidden_imports(
@@ -264,6 +324,8 @@ def test_FR016_scanner_rejects_forbidden_imports(
             '# import assertion_engine.simulator\n"from .. import simulator"',
         ),
         ("simulator/generate.py", "from assertion_engine import evaluator"),
+        ("dsl/syntax.py", "from ..artifacts import canonical_bytes"),
+        ("dsl/checker.py", "from assertion_engine import telemetry"),
     ],
 )
 def test_FR016_scanner_accepts_neutral_and_unrelated_imports(
@@ -287,7 +349,7 @@ def test_FR016_scanner_reports_all_forbidden_targets_with_source_locations(tmp_p
     ]
 
 
-@pytest.mark.parametrize("package", ("dsl", "evaluator", "fuzzer"))
+@pytest.mark.parametrize("package", ("evaluator", "fuzzer"))
 @pytest.mark.parametrize(
     ("source", "node_type"),
     [
@@ -306,7 +368,7 @@ def test_FR016_reserved_packages_reject_executable_m0_content(
     assert reserved_behavior_violations(package_root) == [(relative_path, 1, node_type)]
 
 
-@pytest.mark.parametrize("package", ("dsl", "evaluator", "fuzzer"))
+@pytest.mark.parametrize("package", ("evaluator", "fuzzer"))
 @pytest.mark.parametrize(
     "source", ["", "# Reserved for a later milestone.\n", '"""Reserved."""\npass\n']
 )
@@ -315,13 +377,18 @@ def test_FR016_reserved_packages_accept_empty_placeholders(tmp_path, package, so
     assert reserved_behavior_violations(package_root) == []
 
 
+def test_FR016_dsl_package_accepts_executable_content(tmp_path):
+    package_root = source_tree(tmp_path, "dsl/parser.py", "def parse():\n    pass\n")
+    assert reserved_behavior_violations(package_root) == []
+
+
 def test_FR016_production_dependency_boundaries():
-    for package in ("fuzzer", "playback"):
+    for package in ("dsl", "fuzzer", "playback"):
         assert (PACKAGE_ROOT / package / "__init__.py").is_file()
     assert dependency_violations(PACKAGE_ROOT) == []
 
 
 def test_FR016_production_future_packages_are_empty():
-    for package in ("dsl", "evaluator", "fuzzer"):
+    for package in ("evaluator", "fuzzer"):
         assert (PACKAGE_ROOT / package / "__init__.py").is_file()
     assert reserved_behavior_violations(PACKAGE_ROOT) == []
